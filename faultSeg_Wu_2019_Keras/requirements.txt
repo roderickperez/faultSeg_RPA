@@ -1,7 +1,5 @@
 numpy
+scikit-image
 matplotlib
-scipy
-plotly
-pandas
-tqdm
-torch
+tensorflow
+keras
