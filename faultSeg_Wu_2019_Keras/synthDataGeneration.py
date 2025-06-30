@@ -231,8 +231,8 @@ def parse_args():
     p = argparse.ArgumentParser(description="Generate synthetic seismic/mask pairs with statistics.")
     p.add_argument("--num-pairs", type=int, default=10,
                    help="How many (seismic,mask) cubes to make.")
-    p.add_argument("--format", choices=["npy","npz"], default="npy",
-                   help="File format for output: npy or compressed npz.")
+    p.add_argument("--format", choices=["npy","npz", "dat"], default="npy",
+                   help="File format for output: npy, compressed npz, or dat.")
     p.add_argument("--mask-mode", type=int, choices=[0,1], default=1,
                    help="0=boolean BW mask, 1=uint8 colored mask (1=normal,2=reverse).")
     p.add_argument("--size", type=int, default=128,
@@ -284,6 +284,7 @@ def prepare_dirs(base):
 
 def save_array(arr, path, fmt):
     if fmt=="npy": np.save(path, arr)
+    elif fmt=="dat": arr.tofile(path)
     else:        np.savez_compressed(path, arr=arr) # Save with a keyword 'arr' for npz
 
 def main():
