@@ -1,218 +1,209 @@
 {
     "cube_level_params": [
         {
-            "freq": 29.788446710309177,
-            "noise_sigma": 0.4899127392708259,
-            "num_gaussians": 7,
-            "num_faults_generated": 2,
-            "max_disp_used": 86.0
+            "freq": 28.840779693987145,
+            "noise_sigma": 0.4700977097736784,
+            "num_gaussians": 6,
+            "num_faults_generated": 0,
+            "max_disp_used": 91.0
         },
         {
-            "freq": 31.772236285807217,
-            "noise_sigma": 0.3130338119309834,
-            "num_gaussians": 10,
-            "num_faults_generated": 2,
-            "max_disp_used": 94.0
+            "freq": 23.738624189806867,
+            "noise_sigma": 0.20291103786486758,
+            "num_gaussians": 8,
+            "num_faults_generated": 0,
+            "max_disp_used": 85.0
         },
         {
-            "freq": 8.177720369526167,
-            "noise_sigma": 0.1824614102369774,
+            "freq": 19.01254704886423,
+            "noise_sigma": 0.394221637905674,
+            "num_gaussians": 8,
+            "num_faults_generated": 1,
+            "max_disp_used": 82.0
+        },
+        {
+            "freq": 34.297755411227826,
+            "noise_sigma": 0.2947313422225126,
+            "num_gaussians": 8,
+            "num_faults_generated": 0,
+            "max_disp_used": 75.0
+        },
+        {
+            "freq": 13.900971581134606,
+            "noise_sigma": 0.20666322247816243,
             "num_gaussians": 5,
-            "num_faults_generated": 2,
+            "num_faults_generated": 4,
             "max_disp_used": 76.0
         },
         {
-            "freq": 34.727070578428275,
-            "noise_sigma": 0.31861086825231927,
+            "freq": 8.626233263664215,
+            "noise_sigma": 0.19751341145247117,
             "num_gaussians": 3,
             "num_faults_generated": 4,
-            "max_disp_used": 94.0
-        },
-        {
-            "freq": 12.587963952039523,
-            "noise_sigma": 0.17674656790002408,
-            "num_gaussians": 8,
-            "num_faults_generated": 0,
-            "max_disp_used": 79.0
-        },
-        {
-            "freq": 17.792190222780807,
-            "noise_sigma": 0.20290700409999923,
-            "num_gaussians": 7,
-            "num_faults_generated": 3,
-            "max_disp_used": 99.0
-        },
-        {
-            "freq": 18.732769774640225,
-            "noise_sigma": 0.24845362892888678,
-            "num_gaussians": 5,
-            "num_faults_generated": 2,
-            "max_disp_used": 86.0
-        },
-        {
-            "freq": 11.10732283148472,
-            "noise_sigma": 0.45692849255078866,
-            "num_gaussians": 4,
-            "num_faults_generated": 0,
-            "max_disp_used": 95.0
-        },
-        {
-            "freq": 8.894874569673796,
-            "noise_sigma": 0.30658815816047724,
-            "num_gaussians": 9,
-            "num_faults_generated": 1,
             "max_disp_used": 97.0
         },
         {
-            "freq": 34.079540484911526,
-            "noise_sigma": 0.3662989486055376,
+            "freq": 29.33731526082665,
+            "noise_sigma": 0.27454766863686125,
+            "num_gaussians": 7,
+            "num_faults_generated": 1,
+            "max_disp_used": 77.0
+        },
+        {
+            "freq": 9.153201488907444,
+            "noise_sigma": 0.2872005794116161,
+            "num_gaussians": 8,
+            "num_faults_generated": 4,
+            "max_disp_used": 88.0
+        },
+        {
+            "freq": 32.094158512016776,
+            "noise_sigma": 0.3843979097624419,
+            "num_gaussians": 6,
+            "num_faults_generated": 1,
+            "max_disp_used": 80.0
+        },
+        {
+            "freq": 16.773992747524613,
+            "noise_sigma": 0.18908994082281008,
             "num_gaussians": 10,
             "num_faults_generated": 0,
-            "max_disp_used": 93.0
+            "max_disp_used": 77.0
         }
     ],
     "all_fault_params": [
         {
-            "disp_magnitude_per_cube": 86.0,
-            "applied_disp_signed": 86.0,
-            "vertical_disp_component": -39.188628829681655,
-            "strike": 351.0190812226266,
-            "dip": 62.891193444463234,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 86.0,
-            "applied_disp_signed": 86.0,
-            "vertical_disp_component": -69.08435784098181,
-            "strike": 182.05912278849223,
-            "dip": 36.55298120189106,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 94.0,
-            "applied_disp_signed": 94.0,
-            "vertical_disp_component": -72.45733519143405,
-            "strike": 216.4017952581988,
-            "dip": 39.572174489657364,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 94.0,
-            "applied_disp_signed": 94.0,
-            "vertical_disp_component": -34.79412269566029,
-            "strike": 113.96236497168314,
-            "dip": 68.27511664177796,
+            "disp_magnitude_per_cube": 82.0,
+            "applied_disp_signed": 82.0,
+            "vertical_disp_component": -29.859498465686997,
+            "strike": 257.6447527784896,
+            "dip": 68.64531972656337,
             "slip_sign": 1,
             "fault_type": null
         },
         {
             "disp_magnitude_per_cube": 76.0,
             "applied_disp_signed": 76.0,
-            "vertical_disp_component": -42.28824943217121,
-            "strike": 280.95894006174655,
-            "dip": 56.19112444838787,
+            "vertical_disp_component": -25.759444114673332,
+            "strike": 190.44001876455363,
+            "dip": 70.18769039874297,
             "slip_sign": 1,
             "fault_type": null
         },
         {
             "disp_magnitude_per_cube": 76.0,
             "applied_disp_signed": 76.0,
-            "vertical_disp_component": -15.886504126911253,
-            "strike": 166.2759049932634,
-            "dip": 77.93431338344588,
+            "vertical_disp_component": -60.71048051122311,
+            "strike": 39.61186094745755,
+            "dip": 36.98223091142914,
             "slip_sign": 1,
             "fault_type": null
         },
         {
-            "disp_magnitude_per_cube": 94.0,
-            "applied_disp_signed": 94.0,
-            "vertical_disp_component": -64.75086370851524,
-            "strike": 87.99590463371791,
-            "dip": 46.46172614540998,
+            "disp_magnitude_per_cube": 76.0,
+            "applied_disp_signed": 76.0,
+            "vertical_disp_component": -22.953688795638147,
+            "strike": 354.5145296501066,
+            "dip": 72.42089703401402,
             "slip_sign": 1,
             "fault_type": null
         },
         {
-            "disp_magnitude_per_cube": 94.0,
-            "applied_disp_signed": 94.0,
-            "vertical_disp_component": -68.2876125582089,
-            "strike": 0.4774196636199024,
-            "dip": 43.40923104707831,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 94.0,
-            "applied_disp_signed": 94.0,
-            "vertical_disp_component": -75.33265463026002,
-            "strike": 247.46303317178956,
-            "dip": 36.73492401368379,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 94.0,
-            "applied_disp_signed": 94.0,
-            "vertical_disp_component": -47.67246188880438,
-            "strike": 98.34358500230354,
-            "dip": 59.525565618614394,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 99.0,
-            "applied_disp_signed": 99.0,
-            "vertical_disp_component": -51.580790371315665,
-            "strike": 77.14013989785602,
-            "dip": 58.59943259787027,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 99.0,
-            "applied_disp_signed": 99.0,
-            "vertical_disp_component": -52.265027547728245,
-            "strike": 267.4745750868924,
-            "dip": 58.13432926062438,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 99.0,
-            "applied_disp_signed": 99.0,
-            "vertical_disp_component": -76.26994824105901,
-            "strike": 347.0245816137894,
-            "dip": 39.60986178187005,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 86.0,
-            "applied_disp_signed": 86.0,
-            "vertical_disp_component": -55.20042394287607,
-            "strike": 110.38573233227756,
-            "dip": 50.068941664567134,
-            "slip_sign": 1,
-            "fault_type": null
-        },
-        {
-            "disp_magnitude_per_cube": 86.0,
-            "applied_disp_signed": 86.0,
-            "vertical_disp_component": -31.417776313965327,
-            "strike": 8.901812351516494,
-            "dip": 68.57253918334426,
+            "disp_magnitude_per_cube": 76.0,
+            "applied_disp_signed": 76.0,
+            "vertical_disp_component": -61.13833653158798,
+            "strike": 26.871328030637592,
+            "dip": 36.44265453752493,
             "slip_sign": 1,
             "fault_type": null
         },
         {
             "disp_magnitude_per_cube": 97.0,
             "applied_disp_signed": 97.0,
-            "vertical_disp_component": -68.6459500320499,
-            "strike": 357.31858234782516,
-            "dip": 44.95270641498661,
+            "vertical_disp_component": -77.06007183847967,
+            "strike": 156.3679992684245,
+            "dip": 37.39819727597022,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 97.0,
+            "applied_disp_signed": 97.0,
+            "vertical_disp_component": -73.64065440025358,
+            "strike": 131.58533122482856,
+            "dip": 40.607861847150865,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 97.0,
+            "applied_disp_signed": 97.0,
+            "vertical_disp_component": -68.9742412392011,
+            "strike": 15.107139440608787,
+            "dip": 44.677580637806386,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 97.0,
+            "applied_disp_signed": 97.0,
+            "vertical_disp_component": -77.35925075948734,
+            "strike": 238.91007564354294,
+            "dip": 37.106257144611575,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 77.0,
+            "applied_disp_signed": 77.0,
+            "vertical_disp_component": -22.661764611406415,
+            "strike": 280.4886504304051,
+            "dip": 72.88391548161223,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 88.0,
+            "applied_disp_signed": 88.0,
+            "vertical_disp_component": -30.592806185478125,
+            "strike": 259.8474182359652,
+            "dip": 69.65662765638737,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 88.0,
+            "applied_disp_signed": 88.0,
+            "vertical_disp_component": -21.119762433530326,
+            "strike": 305.7507721261915,
+            "dip": 76.11361897095173,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 88.0,
+            "applied_disp_signed": 88.0,
+            "vertical_disp_component": -37.653488306016555,
+            "strike": 355.9355957756896,
+            "dip": 64.6668705355977,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 88.0,
+            "applied_disp_signed": 88.0,
+            "vertical_disp_component": -71.78567751370814,
+            "strike": 161.1680518752386,
+            "dip": 35.338775185053045,
+            "slip_sign": 1,
+            "fault_type": null
+        },
+        {
+            "disp_magnitude_per_cube": 80.0,
+            "applied_disp_signed": 80.0,
+            "vertical_disp_component": -34.73921000851529,
+            "strike": 204.79683533386293,
+            "dip": 64.26304828744459,
             "slip_sign": 1,
             "fault_type": null
         }
