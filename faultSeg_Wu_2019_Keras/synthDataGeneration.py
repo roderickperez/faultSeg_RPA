@@ -262,6 +262,8 @@ def parse_args():
     # No value like True/False should be passed on the command line.
     p.add_argument("--plot", action="store_true", default=False,
                    help="Generate statistics plots (only when run directly by script).")
+    p.add_argument("--output-dir", type=str, default="output",
+                   help="Base directory for output seismic and mask folders.")
     return p.parse_args()
 
 
@@ -288,8 +290,7 @@ def main():
     args = parse_args()
 
     # Use the output path determined by argparse or default
-    base_out = os.path.expanduser("~/DS_PROJECTS/faultSegmentationDatasetGeneration/output")
-    base_out = base_out.replace("~", os.path.expanduser("~")) # Ensure ~ is expanded
+    base_out = os.path.expanduser(args.output_dir)
 
 
     seismic_dir, mask_dir = prepare_dirs(base_out)

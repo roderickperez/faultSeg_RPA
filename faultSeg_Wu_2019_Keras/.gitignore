@@ -1,6 +1,7 @@
 # Ignore large data files
 *.dat
 *.hdf5
+*.npy
 
 # Ignore python cache
 __pycache__/
