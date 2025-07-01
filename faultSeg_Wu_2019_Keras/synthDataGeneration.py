@@ -5,6 +5,7 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 from datetime import datetime
 import json # Keep json for saving stats
+from tqdm import tqdm
 
 # Helper to parse "int" or "int,int" ranges from CLI
 def parse_int_or_range(s):
@@ -349,9 +350,9 @@ def main():
 
 
     print(f"\nStarting data generation for {args.num_pairs} pairs...")
-    for i in range(args.num_pairs):
+    for i in tqdm(range(args.num_pairs), desc="Generating Cubes"):
         assignment = assignments[i]
-        print(f"Generating cube {i+1}/{args.num_pairs} (Assignment: {assignment})...")
+        #print(f"Generating cube {i+1}/{args.num_pairs} (Assignment: {assignment})...")
 
         # Determine actual cube-level parameters for this cube by sampling from ranges in args
         # Number of Gaussians for folding
