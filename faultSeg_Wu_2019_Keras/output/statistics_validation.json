@@ -1,63 +1,72 @@
 {
     "cube_level_params": [
         {
-            "freq": 27.873573979397733,
-            "noise_sigma": 0.2430887026913221,
-            "num_gaussians": 10,
+            "freq": 20.009964609670824,
+            "noise_sigma": 0.3369012166618906,
+            "num_gaussians": 6,
+            "num_faults_generated": 1,
+            "max_disp_used": 98.0
+        },
+        {
+            "freq": 13.802086028690857,
+            "noise_sigma": 0.3795649106727813,
+            "num_gaussians": 6,
             "num_faults_generated": 3,
             "max_disp_used": 85.0
         },
         {
-            "freq": 6.226313529878281,
-            "noise_sigma": 0.3186037223590209,
+            "freq": 14.011552105766539,
+            "noise_sigma": 0.22535125760311192,
             "num_gaussians": 10,
-            "num_faults_generated": 0,
-            "max_disp_used": 88.0
-        },
-        {
-            "freq": 27.250135853872262,
-            "noise_sigma": 0.3971422512827101,
-            "num_gaussians": 3,
             "num_faults_generated": 1,
-            "max_disp_used": 75.0
+            "max_disp_used": 98.0
         }
     ],
     "all_fault_params": [
         {
-            "disp_magnitude_per_cube": 85.0,
-            "applied_disp_signed": 85.0,
-            "vertical_disp_component": -54.42409055014602,
-            "strike": 170.73804766564078,
-            "dip": 50.187043469204596,
+            "disp_magnitude_per_cube": 98.0,
+            "applied_disp_signed": 98.0,
+            "vertical_disp_component": -38.17716908668073,
+            "strike": 142.36474248814685,
+            "dip": 67.07269239784712,
             "slip_sign": 1,
             "fault_type": "Inverse"
         },
         {
             "disp_magnitude_per_cube": 85.0,
             "applied_disp_signed": 85.0,
-            "vertical_disp_component": -69.46779857306775,
-            "strike": 345.8555592217525,
-            "dip": 35.18774045630641,
+            "vertical_disp_component": -48.03826911828656,
+            "strike": 340.9549225316332,
+            "dip": 55.586867621452264,
             "slip_sign": 1,
             "fault_type": "Inverse"
         },
         {
             "disp_magnitude_per_cube": 85.0,
-            "applied_disp_signed": 85.0,
-            "vertical_disp_component": -34.45591958311657,
-            "strike": 155.4696459813459,
-            "dip": 66.08607579219408,
-            "slip_sign": 1,
-            "fault_type": "Inverse"
+            "applied_disp_signed": -85.0,
+            "vertical_disp_component": 40.34054311323782,
+            "strike": 69.5158055312715,
+            "dip": 61.66704062329385,
+            "slip_sign": -1,
+            "fault_type": "Normal"
         },
         {
-            "disp_magnitude_per_cube": 75.0,
-            "applied_disp_signed": 75.0,
-            "vertical_disp_component": -56.62948419265501,
-            "strike": 93.32686363567326,
-            "dip": 40.96940570423701,
-            "slip_sign": 1,
-            "fault_type": "Inverse"
+            "disp_magnitude_per_cube": 85.0,
+            "applied_disp_signed": -85.0,
+            "vertical_disp_component": 63.15583930866462,
+            "strike": 61.1344295202097,
+            "dip": 42.01155420440295,
+            "slip_sign": -1,
+            "fault_type": "Normal"
+        },
+        {
+            "disp_magnitude_per_cube": 98.0,
+            "applied_disp_signed": -98.0,
+            "vertical_disp_component": 58.35048872868485,
+            "strike": 228.22297350210053,
+            "dip": 53.4579097473952,
+            "slip_sign": -1,
+            "fault_type": "Normal"
         }
     ]
 }
