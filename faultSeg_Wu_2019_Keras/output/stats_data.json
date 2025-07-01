@@ -1,6 +1,6 @@
 {
-    "total_pairs": 100,
-    "train_pairs": 70,
-    "validation_pairs": 15,
-    "prediction_pairs": 15
+    "total_pairs": 20,
+    "train_pairs": 14,
+    "validation_pairs": 3,
+    "prediction_pairs": 3
 }
