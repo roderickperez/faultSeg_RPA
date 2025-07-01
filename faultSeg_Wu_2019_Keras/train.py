@@ -14,6 +14,7 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler, ReduceLROnPl
 from keras import backend as keras
 from utils import DataGenerator
 from unet3 import *
+from datetime import datetime
 
 def main():
   goTrain()
@@ -52,7 +53,18 @@ def goTrain():
   # Fit the model
   history=model.fit_generator(generator=train_generator,
   validation_data=valid_generator,epochs=100,callbacks=callbacks_list,verbose=1)
-  model.save('check1/fseg.hdf5')
+  
+  now = datetime.now()
+  date_time = now.strftime("%Y-%m-%d_%H")
+  num_pairs = 20
+  model_name = f"pretrained_model_{num_pairs}_{date_time}.hdf5"
+  model_dir = "/Users/roderickperez/Documents/DS_Projects/faultSegm/faultSeg_Wu_2019_Keras/model"
+  if not os.path.exists(model_dir):
+      os.makedirs(model_dir)
+  model_path = os.path.join(model_dir, model_name)
+  model.save(model_path)
+  print(f"Model saved to {model_path}")
+
   showHistory(history)
 
 def showHistory(history):
@@ -117,4 +129,3 @@ class TrainValTensorBoard(TensorBoard):
 
 if __name__ == '__main__':
     main()
-

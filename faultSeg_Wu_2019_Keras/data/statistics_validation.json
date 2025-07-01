@@ -1,0 +1,36 @@
+{
+    "cube_level_params": [
+        {
+            "freq": 18.375348213170916,
+            "noise_sigma": 0.13141535686768108,
+            "num_gaussians": 2,
+            "num_faults_generated": 0,
+            "max_disp_used": 76.0
+        },
+        {
+            "freq": 22.900192286844714,
+            "noise_sigma": 0.1534611254339553,
+            "num_gaussians": 2,
+            "num_faults_generated": 1,
+            "max_disp_used": 88.0
+        },
+        {
+            "freq": 17.966325675872035,
+            "noise_sigma": 0.28282563461928445,
+            "num_gaussians": 8,
+            "num_faults_generated": 0,
+            "max_disp_used": 87.0
+        }
+    ],
+    "all_fault_params": [
+        {
+            "disp_magnitude_per_cube": 88.0,
+            "applied_disp_signed": -88.0,
+            "vertical_disp_component": 34.99639363727809,
+            "strike": 79.64560776559611,
+            "dip": 66.56638316471393,
+            "slip_sign": -1,
+            "fault_type": "Normal"
+        }
+    ]
+}

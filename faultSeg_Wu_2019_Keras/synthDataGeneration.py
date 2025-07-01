@@ -264,7 +264,7 @@ def parse_args():
     p.add_argument("--plot", action="store_true", default=False,
                    help="Generate statistics plots (only when run directly by script).")
     p.add_argument("--output-dir", type=str, default="output",
-                   help="Base directory for output train, validation, and prediction folders.")
+                   help="Base directory for output train, and validation folders.")
     p.add_argument("--train-split", type=float, default=0.7,
                    help="Percentage of data to use for training (e.g., 0.7 for 70%).")
     p.add_argument("--val-split", type=float, default=0.15,
@@ -274,7 +274,7 @@ def parse_args():
 
 def prepare_dirs(base):
     # New directory structure
-    splits = ['train', 'validation', 'prediction']
+    splits = ['train', 'validation']
     subfolders = ['seis', 'fault']
     
     # Clean and create directories
@@ -319,21 +319,19 @@ def main():
 
     # --- Data assignment ---
     num_train = int(np.floor(args.num_pairs * args.train_split))
-    num_val = int(np.floor(args.num_pairs * args.val_split))
-    num_pred = args.num_pairs - num_train - num_val
+    num_val = args.num_pairs - num_train
 
     # Create a shuffled list of assignments
-    assignments = ['train'] * num_train + ['validation'] * num_val + ['prediction'] * num_pred
+    assignments = ['train'] * num_train + ['validation'] * num_val
     np.random.shuffle(assignments)
 
-    print(f"\nData split: {num_train} train, {num_val} validation, {num_pred} prediction.")
+    print(f"\nData split: {num_train} train, {num_val} validation.")
 
     # Dictionaries to collect parameters for statistics for each split
     stats = {
         'all': {'cube_level_params': [], 'all_fault_params': []},
         'train': {'cube_level_params': [], 'all_fault_params': []},
-        'validation': {'cube_level_params': [], 'all_fault_params': []},
-        'prediction': {'cube_level_params': [], 'all_fault_params': []}
+        'validation': {'cube_level_params': [], 'all_fault_params': []}
     }
 
     # Determine *once* if ranges are used for cube-level params from the parsed args
@@ -453,7 +451,7 @@ def main():
         print(f"Saved full statistics to {full_stats_path}")
 
         # Save individual split statistics
-        for split in ['train', 'validation', 'prediction']:
+        for split in ['train', 'validation']:
             if stats[split]['cube_level_params']: # Only save if there's data for the split
                 split_stats_path = os.path.join(base_out, f"statistics_{split}.json")
                 with open(split_stats_path, 'w') as f:
@@ -493,7 +491,7 @@ def main():
     # zip if requested
     if args.zip:
         print("\nCreating zip archives...")
-        for split in ['train', 'validation', 'prediction']:
+        for split in ['train', 'validation']:
             split_dir = os.path.join(base_out, split)
             if os.path.exists(split_dir):
                  print(f"Archiving {split_dir}...")
@@ -505,7 +503,7 @@ def main():
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"\n[{now}] Generation complete.")
-    for split in ['train', 'validation', 'prediction']:
+    for split in ['train', 'validation']:
         print(f" • {split}/seis/ → {dirs[split]['seis']}")
         print(f" • {split}/fault/ → {dirs[split]['fault']}")
     if args.zip:

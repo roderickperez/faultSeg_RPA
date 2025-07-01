@@ -1,36 +1,99 @@
 {
     "cube_level_params": [
         {
-            "freq": 18.375348213170916,
-            "noise_sigma": 0.13141535686768108,
-            "num_gaussians": 2,
-            "num_faults_generated": 0,
-            "max_disp_used": 76.0
-        },
-        {
-            "freq": 22.900192286844714,
-            "noise_sigma": 0.1534611254339553,
-            "num_gaussians": 2,
+            "freq": 19.983056838596383,
+            "noise_sigma": 0.3036526864520099,
+            "num_gaussians": 7,
             "num_faults_generated": 1,
-            "max_disp_used": 88.0
+            "max_disp_used": 93.0
         },
         {
-            "freq": 17.966325675872035,
-            "noise_sigma": 0.28282563461928445,
-            "num_gaussians": 8,
-            "num_faults_generated": 0,
-            "max_disp_used": 87.0
+            "freq": 22.74135555874641,
+            "noise_sigma": 0.18737565936597123,
+            "num_gaussians": 4,
+            "num_faults_generated": 4,
+            "max_disp_used": 97.0
+        },
+        {
+            "freq": 28.175836483241486,
+            "noise_sigma": 0.4590197963849837,
+            "num_gaussians": 7,
+            "num_faults_generated": 3,
+            "max_disp_used": 76.0
         }
     ],
     "all_fault_params": [
         {
-            "disp_magnitude_per_cube": 88.0,
-            "applied_disp_signed": -88.0,
-            "vertical_disp_component": 34.99639363727809,
-            "strike": 79.64560776559611,
-            "dip": 66.56638316471393,
+            "disp_magnitude_per_cube": 93.0,
+            "applied_disp_signed": -93.0,
+            "vertical_disp_component": 41.14474279330821,
+            "strike": 67.36018563941596,
+            "dip": 63.7418290212412,
             "slip_sign": -1,
             "fault_type": "Normal"
+        },
+        {
+            "disp_magnitude_per_cube": 97.0,
+            "applied_disp_signed": -97.0,
+            "vertical_disp_component": 74.76378625503847,
+            "strike": 193.3716662136763,
+            "dip": 39.5777532516434,
+            "slip_sign": -1,
+            "fault_type": "Normal"
+        },
+        {
+            "disp_magnitude_per_cube": 97.0,
+            "applied_disp_signed": -97.0,
+            "vertical_disp_component": 23.552691318735036,
+            "strike": 358.7952291424697,
+            "dip": 75.94747773918121,
+            "slip_sign": -1,
+            "fault_type": "Normal"
+        },
+        {
+            "disp_magnitude_per_cube": 97.0,
+            "applied_disp_signed": 97.0,
+            "vertical_disp_component": -66.76683086654144,
+            "strike": 48.63777974900269,
+            "dip": 46.502901289884186,
+            "slip_sign": 1,
+            "fault_type": "Inverse"
+        },
+        {
+            "disp_magnitude_per_cube": 97.0,
+            "applied_disp_signed": 97.0,
+            "vertical_disp_component": -28.958881601890663,
+            "strike": 216.08215349973162,
+            "dip": 72.62975632781472,
+            "slip_sign": 1,
+            "fault_type": "Inverse"
+        },
+        {
+            "disp_magnitude_per_cube": 76.0,
+            "applied_disp_signed": -76.0,
+            "vertical_disp_component": 18.55749744189293,
+            "strike": 34.61263622146185,
+            "dip": 75.86676245837613,
+            "slip_sign": -1,
+            "fault_type": "Normal"
+        },
+        {
+            "disp_magnitude_per_cube": 76.0,
+            "applied_disp_signed": 76.0,
+            "vertical_disp_component": -60.49033312152323,
+            "strike": 140.65177805958464,
+            "dip": 37.25724703280595,
+            "slip_sign": 1,
+            "fault_type": "Inverse"
+        },
+        {
+            "disp_magnitude_per_cube": 76.0,
+            "applied_disp_signed": 76.0,
+            "vertical_disp_component": -59.02072976248444,
+            "strike": 124.6367110895279,
+            "dip": 39.050721237523085,
+            "slip_sign": 1,
+            "fault_type": "Inverse"
         }
     ]
 }
