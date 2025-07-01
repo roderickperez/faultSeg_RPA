@@ -263,24 +263,35 @@ def parse_args():
     p.add_argument("--plot", action="store_true", default=False,
                    help="Generate statistics plots (only when run directly by script).")
     p.add_argument("--output-dir", type=str, default="output",
-                   help="Base directory for output seismic and mask folders.")
+                   help="Base directory for output train, validation, and prediction folders.")
+    p.add_argument("--train-split", type=float, default=0.7,
+                   help="Percentage of data to use for training (e.g., 0.7 for 70%).")
+    p.add_argument("--val-split", type=float, default=0.15,
+                   help="Percentage of data to use for validation (e.g., 0.15 for 15%).")
     return p.parse_args()
 
 
 def prepare_dirs(base):
-    seismic_dir, mask_dir = os.path.join(base, "seismic"), os.path.join(base, "mask")
-    # Always clean output directories before generating
-    for d in (seismic_dir, mask_dir):
-        if os.path.exists(d):
-             try:
-                 shutil.rmtree(d)
-                 print(f"Cleaned directory: {d}")
-             except OSError as e:
-                 print(f"Error clearing directory {d}: {e}")
-                 # If cleanup fails, exit to prevent writing into potentially old data
-                 exit(1)
-        os.makedirs(d, exist_ok=True)
-    return seismic_dir, mask_dir
+    # New directory structure
+    splits = ['train', 'validation', 'prediction']
+    subfolders = ['seis', 'fault']
+    
+    # Clean and create directories
+    for split in splits:
+        split_path = os.path.join(base, split)
+        if os.path.exists(split_path):
+            try:
+                shutil.rmtree(split_path)
+                print(f"Cleaned directory: {split_path}")
+            except OSError as e:
+                print(f"Error clearing directory {split_path}: {e}")
+                exit(1)
+        for subfolder in subfolders:
+            dir_path = os.path.join(base, split, subfolder)
+            os.makedirs(dir_path, exist_ok=True)
+            
+    return {split: {sub: os.path.join(base, split, sub) for sub in subfolders} for split in splits}
+
 
 def save_array(arr, path, fmt):
     if fmt=="npy": np.save(path, arr)
@@ -290,18 +301,39 @@ def save_array(arr, path, fmt):
 def main():
     args = parse_args()
 
+    # Validate splits
+    if not (0 <= args.train_split <= 1 and 0 <= args.val_split <= 1):
+        raise ValueError("Train and validation splits must be between 0 and 1.")
+    pred_split = 1.0 - args.train_split - args.val_split
+    if pred_split < 0:
+        raise ValueError("Sum of train and validation splits cannot exceed 1.0.")
+
     # Use the output path determined by argparse or default
     base_out = os.path.expanduser(args.output_dir)
 
-
-    seismic_dir, mask_dir = prepare_dirs(base_out)
+    # Prepare the new directory structure
+    dirs = prepare_dirs(base_out)
 
     nx = ny = nz = args.size
 
-    # Lists to collect parameters for statistics
-    all_fault_params = [] # Stores dicts for each individual fault
-    cube_level_params = [] # Stores dicts for each cube's overall parameters
+    # --- Data assignment ---
+    num_train = int(np.floor(args.num_pairs * args.train_split))
+    num_val = int(np.floor(args.num_pairs * args.val_split))
+    num_pred = args.num_pairs - num_train - num_val
 
+    # Create a shuffled list of assignments
+    assignments = ['train'] * num_train + ['validation'] * num_val + ['prediction'] * num_pred
+    np.random.shuffle(assignments)
+
+    print(f"\nData split: {num_train} train, {num_val} validation, {num_pred} prediction.")
+
+    # Dictionaries to collect parameters for statistics for each split
+    stats = {
+        'all': {'cube_level_params': [], 'all_fault_params': []},
+        'train': {'cube_level_params': [], 'all_fault_params': []},
+        'validation': {'cube_level_params': [], 'all_fault_params': []},
+        'prediction': {'cube_level_params': [], 'all_fault_params': []}
+    }
 
     # Determine *once* if ranges are used for cube-level params from the parsed args
     is_freq_range = isinstance(args.freq, tuple)
@@ -318,7 +350,8 @@ def main():
 
     print(f"\nStarting data generation for {args.num_pairs} pairs...")
     for i in range(args.num_pairs):
-        print(f"Generating cube {i+1}/{args.num_pairs}...")
+        assignment = assignments[i]
+        print(f"Generating cube {i+1}/{args.num_pairs} (Assignment: {assignment})...")
 
         # Determine actual cube-level parameters for this cube by sampling from ranges in args
         # Number of Gaussians for folding
@@ -346,13 +379,15 @@ def main():
 
         # Record cube-level parameters *before* generation
         # Cast to standard Python types for JSON serialization
-        cube_level_params.append({
+        cube_params = {
             'freq': float(freq_this_cube),
             'noise_sigma': float(noise_sigma_this_cube) if noise_sigma_this_cube is not None else None,
             'num_gaussians': int(ng_this_cube),
             'num_faults_generated': int(nf_this_cube),
             'max_disp_used': float(md_this_cube) # The magnitude used for ALL faults in this cube
-        })
+        }
+        stats[assignment]['cube_level_params'].append(cube_params)
+        stats['all']['cube_level_params'].append(cube_params)
 
 
         # base reflectivity
@@ -374,7 +409,8 @@ def main():
             dip_range   = dip_range_arg     # Pass ranges/values from args
         )
         # Collect fault parameters generated in this cube
-        all_fault_params.extend(fault_list_this_cube)
+        stats[assignment]['all_fault_params'].extend(fault_list_this_cube)
+        stats['all']['all_fault_params'].extend(fault_list_this_cube)
 
         # wavelet
         _, wavelet = ricker_wavelet(freq_this_cube, args.length, args.dt) # Use determined freq
@@ -399,28 +435,32 @@ def main():
         mask_to_save = mask.astype(np.uint8) # Mask should always be uint8
 
 
-        # save
+        # save to the correct split directory
         fname = f"{i}.{args.format}"
-        # Save seismic as float32, mask as uint8
-        seismic_path = os.path.join(seismic_dir, fname)
-        mask_path = os.path.join(mask_dir, fname)
+        seismic_path = os.path.join(dirs[assignment]['seis'], fname)
+        mask_path = os.path.join(dirs[assignment]['fault'], fname)
         save_array(noisy_to_save, seismic_path, args.format)
         save_array(mask_to_save, mask_path, args.format)
 
     # --- Save Statistics Data ---
-    stats_file_path = os.path.join(base_out, "stats_data.json")
+    print("\n--- Saving Statistics Files ---")
     try:
-        # JSON requires serializable data. Lists of dicts with basic types are fine.
-        # We ensured parameters are float/int/None/str before appending to lists.
-        data_to_save = {
-            'cube_level_params': cube_level_params,
-            'all_fault_params': all_fault_params
-        }
-        with open(stats_file_path, 'w') as f:
-            json.dump(data_to_save, f, indent=4)
-        # print(f"\nSaved statistics data to {stats_file_path}") # Moved print to notebook for clarity
+        # Save full statistics
+        full_stats_path = os.path.join(base_out, "statistics_full.json")
+        with open(full_stats_path, 'w') as f:
+            json.dump(stats['all'], f, indent=4)
+        print(f"Saved full statistics to {full_stats_path}")
+
+        # Save individual split statistics
+        for split in ['train', 'validation', 'prediction']:
+            if stats[split]['cube_level_params']: # Only save if there's data for the split
+                split_stats_path = os.path.join(base_out, f"statistics_{split}.json")
+                with open(split_stats_path, 'w') as f:
+                    json.dump(stats[split], f, indent=4)
+                print(f"Saved {split} statistics to {split_stats_path}")
+
     except Exception as e:
-        print(f"Error saving statistics data: {e}") # Keep error print in script
+        print(f"Error saving statistics data: {e}")
 
 
     # --- Plotting (ONLY if --plot is True) ---
@@ -436,8 +476,9 @@ def main():
         #     try:
         #         with open(stats_file_path, 'r') as f:
         #              loaded_stats = json.load(f)
-        #         cube_level_params_loaded = loaded_stats.get('cube_level_params', [])
-        #         all_fault_params_loaded = loaded_stats.get('all_fault_params', [])
+        #         # Now loaded_stats is a dict with keys 'all', 'train', etc.
+        #         cube_level_params_loaded = loaded_stats.get('all', {}).get('cube_level_params', [])
+        #         all_fault_params_loaded = loaded_stats.get('all', {}).get('all_fault_params', [])
         #         # Call plotting functions using loaded_stats
         #         # plot_fault_counts(all_fault_params_loaded)
         #         # ... etc ...
@@ -451,22 +492,23 @@ def main():
     # zip if requested
     if args.zip:
         print("\nCreating zip archives...")
-        for folder in (seismic_dir, mask_dir):
-            if os.path.exists(folder):
-                 print(f"Archiving {folder}...")
-                 # Correct root_dir and base_dir for zip
-                 shutil.make_archive(folder, 'zip', root_dir=os.path.dirname(folder), base_dir=os.path.basename(folder))
-                 print(f"Created {folder}.zip")
+        for split in ['train', 'validation', 'prediction']:
+            split_dir = os.path.join(base_out, split)
+            if os.path.exists(split_dir):
+                 print(f"Archiving {split_dir}...")
+                 shutil.make_archive(split_dir, 'zip', root_dir=base_out, base_dir=split)
+                 print(f"Created {split_dir}.zip")
             else:
-                print(f"Warning: Directory not found for zipping: {folder}")
+                print(f"Warning: Directory not found for zipping: {split_dir}")
 
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"\n[{now}] Generation complete.")
-    print(f" • seismic → {seismic_dir}  ({args.format}, float32)")
-    print(f" • mask    → {mask_dir}    ({args.format}, uint8)")
+    for split in ['train', 'validation', 'prediction']:
+        print(f" • {split}/seis/ → {dirs[split]['seis']}")
+        print(f" • {split}/fault/ → {dirs[split]['fault']}")
     if args.zip:
-        print(f" • Archives: {seismic_dir}.zip, {mask_dir}.zip")
+        print(f" • Archives created in {base_out}")
     print("Done ✅")
 
 
