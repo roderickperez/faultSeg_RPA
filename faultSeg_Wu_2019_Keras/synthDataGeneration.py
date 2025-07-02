@@ -346,7 +346,7 @@ def main():
     strike_range_arg = args.strike
     dip_range_arg = args.dip
 
-
+    print(f"Output format: {args.format}")
     print(f"\nStarting data generation for {args.num_pairs} pairs...")
     for i in tqdm(range(args.num_pairs), desc="Generating Cubes"):
         assignment = assignments[i]

@@ -1,9 +1,9 @@
 import numpy as np
-import keras
+import tensorflow as tf
 import random
-from keras.utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 
-class DataGenerator(keras.utils.Sequence):
+class DataGenerator(tf.keras.utils.Sequence):
   'Generates data for keras'
   def __init__(self,dpath,fpath,data_IDs, batch_size=1, dim=(128,128,128), 
              n_channels=1, shuffle=True):
@@ -44,8 +44,8 @@ class DataGenerator(keras.utils.Sequence):
   def __data_generation(self, data_IDs_temp):
     'Generates data containing batch_size samples'
     # Initialization
-    gx  = np.fromfile(self.dpath+str(data_IDs_temp[0])+'.dat',dtype=np.single)
-    fx  = np.fromfile(self.fpath+str(data_IDs_temp[0])+'.dat',dtype=np.single)
+    gx  = np.load(self.dpath+str(data_IDs_temp[0])+'.npy')
+    fx  = np.load(self.fpath+str(data_IDs_temp[0])+'.npy')
     gx = np.reshape(gx,self.dim)
     fx = np.reshape(fx,self.dim)
     #gmin = np.min(gx)

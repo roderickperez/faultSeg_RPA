@@ -28,8 +28,8 @@ def goTrainTest():
   faultPath = "./data/train/fault/"
   n1,n2,n3=128,128,128
   dk = 100
-  gx = np.fromfile(seismPath+str(dk)+'.dat',dtype=np.single)
-  fx = np.fromfile(faultPath+str(dk)+'.dat',dtype=np.single)
+  gx = np.load(seismPath+str(dk)+'.npy')
+  fx = np.load(faultPath+str(dk)+'.npy')
   gx = np.reshape(gx,(n1,n2,n3))
   fx = np.reshape(fx,(n1,n2,n3))
   gm = np.mean(gx)
@@ -50,8 +50,8 @@ def goValidTest():
   faultPath = "./data/validation/fault/"
   n1,n2,n3=128,128,128
   dk = 2
-  gx = np.fromfile(seismPath+str(dk)+'.dat',dtype=np.single)
-  fx = np.fromfile(faultPath+str(dk)+'.dat',dtype=np.single)
+  gx = np.load(seismPath+str(dk)+'.npy')
+  fx = np.load(faultPath+str(dk)+'.npy')
   gx = np.reshape(gx,(n1,n2,n3))
   fx = np.reshape(fx,(n1,n2,n3))
   gm = np.mean(gx)
@@ -84,7 +84,7 @@ def goValidTest():
 def goF3Test(): 
   seismPath = "./data/prediction/f3d/"
   n3,n2,n1=512,384,128
-  gx = np.fromfile(seismPath+'gxl.dat',dtype=np.single)
+  gx = np.load(seismPath+'gxl.npy')
   gx = np.reshape(gx,(n3,n2,n1))
   gm = np.mean(gx)
   gs = np.std(gx)
