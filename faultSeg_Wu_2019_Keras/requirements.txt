@@ -3,3 +3,9 @@ scikit-image
 matplotlib
 tensorflow
 keras
+torchvision
+torch
+pandas
+scipy
+scikit-learn
+tqdm
