@@ -1,11 +1,15 @@
 numpy
 scikit-image
 matplotlib
-tensorflow
-keras
 torchvision
 torch
 pandas
 scipy
 scikit-learn
 tqdm
+plotly
+Pillow
+ipywidgets
+ipython
+tensorflow
+keras
