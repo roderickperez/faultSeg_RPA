@@ -1,8 +1,10 @@
 numpy
 scikit-image
 matplotlib
-torchvision
+tensorflow-gpu
+keras
 torch
+torchvision
 pandas
 scipy
 scikit-learn
@@ -11,5 +13,3 @@ plotly
 Pillow
 ipywidgets
 ipython
-tensorflow
-keras

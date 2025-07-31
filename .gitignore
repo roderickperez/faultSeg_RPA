@@ -1,30 +1,159 @@
-tf_gpu/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*cpython-*.so
 
-#*.class
+# C extensions
+*.so
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-.gradle/
+# PyInstaller
+*.manifest
+*.spec
 
-# Package Files #
-#*.jar
-#*.war
-#*.ear
-*.npy
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+checkpoints/
+checkpoints_*/
+faultSeg_Wu_2019_Keras/checkpoints_*/
+faultSeg_Wu_2019_Keras/check_notebook/
+
+# Model files and checkpoints
+*.h5
+*.hdf5
 *.keras
+*.pt
 *.pth
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-/model/*.hdf5
+*.pb
+*.ckpt
+*.model
+*.onnx
+/model/
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# VS Code
+.vscode/
+
+# Data files
 /data/
-/check/
-/check1/
-/log/
-/log1/
-/png/
+*.npy
 *.dat
-#/src
-#/build
-#/libs
-/workbench.xmi
-/.gradle
+/faultSeg_Wu_2019_Keras/data_processed_npy/
+/faultSeg_Wu_2019_Keras/new_data/
+
+# Logs
+/logs/
+logs_*/
+*.log
+/faultSeg_Wu_2019_Keras/logs_*/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Other
+tf_gpu/
+.mtj.tmp/
+.gradle/
+workbench.xmi
