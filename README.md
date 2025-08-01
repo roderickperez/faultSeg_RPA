@@ -46,7 +46,7 @@ This repository provides three different implementations of the U-Net model for 
 
 **Location:** `/home/roderickperez/DS_PROJECTS/faultSeg/faultSeg_2019_tensorflow`
 
-![TensorFlow Model Training History](@/home/roderickperez/DS_PROJECTS/faultSeg/faultSeg_2019_tensorflow/output/history_plots/unet_tf_model_200pairs_25epochs_2025-07-31_20-40-14_history.png)
+![TensorFlow Model Training History](faultSeg_2019_tensorflow/output/history_plots/unet_tf_model_200pairs_25epochs_2025-07-31_20-40-14_history.png)
 
 ### PyTorch Implementation
 
