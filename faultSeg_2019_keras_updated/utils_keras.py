@@ -1,5 +1,5 @@
 import numpy as np
-import tensorflow.keras as keras
+import tensorflow.keras as keras # type: ignore
 import random
 
 class DataGenerator(keras.utils.Sequence):
