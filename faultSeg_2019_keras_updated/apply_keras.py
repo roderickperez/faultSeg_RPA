@@ -1,28 +1,40 @@
-#import math
-import skimage
-import numpy as np
-import glob, os
-import matplotlib.pyplot as plt
+# apply_keras.py (Corrected)
 
-import tensorflow as tf
-#from keras import backend
-from tensorflow.keras.layers import *
-from tensorflow.keras.models import load_model
-from skimage.measure import compare_psnr
-from unet3_keras import cross_entropy_balanced
+import glob
 import os
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from unet3_keras import cross_entropy_balanced
 
 # --- Configuration ---
 pngDir = './png/'
+os.makedirs(pngDir, exist_ok=True)
+
+# --- FIX: Point to the correct checkpoint directory used in training ---
+checkpoint_dir = 'checkpoints'
 ckpts = sorted(
-    glob.glob(os.path.join('model', 'checkpoints', 'fseg-*.keras')),
+    glob.glob(os.path.join(checkpoint_dir, 'fseg-*.keras')),
     key=lambda p: int(os.path.splitext(os.path.basename(p))[0].split('-')[1])
 )
-assert ckpts, "No .keras checkpoints found in model/checkpoints/"
+# Also check for the final saved model
+final_model_path = os.path.join(checkpoint_dir, 'fseg_final.keras')
+if os.path.exists(final_model_path):
+    model_path = final_model_path
+elif ckpts:
+    model_path = ckpts[-1] # Use the last epoch's checkpoint if final doesn't exist
+else:
+    raise FileNotFoundError(f"No .keras checkpoints found in '{checkpoint_dir}'")
+
+print(f"Loading model: {model_path}")
 model = load_model(
-    ckpts[-1],
+    model_path,
     custom_objects={'cross_entropy_balanced': cross_entropy_balanced}
 )
+
+# (The rest of your apply_keras.py script is correct and needs no changes)
+# main(), goTrainTest(), goValidTest(), goF3Test(), plot2d() are all fine.
 
 def main():
   #goTrainTest()
@@ -64,12 +76,6 @@ def goValidTest():
   gs = np.std(gx)
   gx = gx-gm
   gx = gx/gs
-  '''
-  gmin = np.min(gx)
-  gmax = np.max(gx)
-  gx = gx-gmin
-  gx = gx/(gmax-gmin)
-  '''
   gx = np.transpose(gx)
   fx = np.transpose(fx)
   fp = model.predict(np.reshape(gx,(1,n1,n2,n3,1)),verbose=1)
@@ -96,12 +102,6 @@ def goF3Test():
   gs = np.std(gx)
   gx = gx-gm
   gx = gx/gs
-  '''
-  gmin = np.min(gx)
-  gmax = np.max(gx)
-  gx = gx-gmin
-  gx = gx/(gmax-gmin)
-  '''
   gx = np.transpose(gx)
   fp = model.predict(np.reshape(gx,(1,n1,n2,n3,1)),verbose=1)
   fp = fp[0,:,:,:,0]
@@ -117,7 +117,6 @@ def goF3Test():
 
 def plot2d(gx,fx,fp,at=1,png=None):
   fig = plt.figure(figsize=(15,5))
-  #fig = plt.figure()
   ax = fig.add_subplot(131)
   ax.imshow(gx,vmin=-2,vmax=2,cmap=plt.cm.bone,interpolation='bicubic',aspect=at)
   ax = fig.add_subplot(132)
@@ -125,12 +124,9 @@ def plot2d(gx,fx,fp,at=1,png=None):
   ax = fig.add_subplot(133)
   ax.imshow(fp,vmin=0,vmax=1.0,cmap=plt.cm.bone,interpolation='bicubic',aspect=at)
   if png:
-    plt.savefig(pngDir+png+'.png')
-  #cbar = plt.colorbar()
-  #cbar.set_label('Fault probability')
+    plt.savefig(os.path.join(pngDir, png + '.png'))
   plt.tight_layout()
   plt.show()
 
 if __name__ == '__main__':
     main()
-

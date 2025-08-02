@@ -36,7 +36,7 @@ def goTrain():
   valid_generator = DataGenerator(dpath=seismPathV,fpath=faultPathV,
                                   data_IDs=valid_ID,**params)
   model = unet(input_size=(None, None, None,1))
-  model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', 
+  model.compile(optimizer=Adam(lr=1e-4), loss='cross_entropy_balanced', # 'binary_crossentropy', 
                 metrics=['accuracy'])
   model.summary()
 
