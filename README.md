@@ -62,7 +62,7 @@ This repository provides three different implementations of the U-Net model for 
 
 ![PyTorch Model Training History](faultSeg_2019_pyTorch/output/history_plots/unet_pytorch_model_200pairs_25epochs_2025-07-31_21-06-01_history.png)
 
-![PyTorch Training (Sample 10, Slice 64) | Validation Dataset](faultSeg_2019_tensorflow/output/images/prediction_slice_64_tf.png)
+![PyTorch Training (Sample 10, Slice 64) | Validation Dataset](faultSeg_2019_pyTorch/output/images/prediction_slice_64_pt.png)
 
 ![PyTorch Training | F3 Dataset](faultSeg_2019_keras_updated/output/images/faultSegResultsUsingKeras_updated.png)
 
