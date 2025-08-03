@@ -64,7 +64,7 @@ This repository provides three different implementations of the U-Net model for 
 
 ![PyTorch Training (Sample 10, Slice 64) | Validation Dataset](faultSeg_2019_pyTorch/output/images/prediction_slice_64_pt.png)
 
-![PyTorch Training | F3 Dataset](faultSeg_2019_keras_updated/output/images/faultSegResultsUsingKeras_updated.png)
+![PyTorch Training | F3 Dataset](faultSeg_2019_pyTorch/output/images/faultSegResultsUsingPyTorch.png)
 
 As shown in the plots, all three models achieve comparable performance on the validation set, demonstrating high accuracy and low loss after 25 epochs.
 
