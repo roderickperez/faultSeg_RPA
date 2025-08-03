@@ -52,11 +52,19 @@ This repository provides three different implementations of the U-Net model for 
 
 ![TensorFlow Model Training History](faultSeg_2019_tensorflow/output/history_plots/unet_tf_model_200pairs_25epochs_2025-07-31_20-40-14_history.png)
 
+![TensorFlow Training (Sample 10, Slice 64) | Validation Dataset](faultSeg_2019_tensorflow/output/images/prediction_slice_64_tf.png)
+
+![TensorFlow Training | F3 Dataset](faultSeg_2019_tensorflow/output/images/faultSegResultsUsingTensorFlow.png)
+
 ### PyTorch Implementation
 
 **Location:** `/home/roderickperez/DS_PROJECTS/faultSeg/faultSeg_2019_pyTorch`
 
 ![PyTorch Model Training History](faultSeg_2019_pyTorch/output/history_plots/unet_pytorch_model_200pairs_25epochs_2025-07-31_21-06-01_history.png)
+
+![PyTorch Training (Sample 10, Slice 64) | Validation Dataset](faultSeg_2019_pyTorch/output/images/prediction_slice_64_pt.png)
+
+![PyTorch Training | F3 Dataset](faultSeg_2019_pyTorch/output/images/faultSegResultsUsingPyTorch.png)
 
 As shown in the plots, all three models achieve comparable performance on the validation set, demonstrating high accuracy and low loss after 25 epochs.
 
