@@ -40,7 +40,11 @@ This repository provides three different implementations of the U-Net model for 
 
 **Location:** `/home/roderickperez/DS_PROJECTS/faultSeg/faultSeg_2019_keras_updated`
 
-![Keras Model Training History](faultSeg_2019_keras_updated/output/history_plots/unet_keras_model_200pairs_25epochs_2025-07-31_18-11-42_history.png)
+![Keras Model Training History](faultSeg_2019_keras_updated/output/history_plots/unet_keras_model_200pairs_25epochs_2025-08-02_17-03-28_history.png)
+
+![Keras Training (Sample 10) | Validation Dataset](faultSeg_2019_keras_updated/output/history_plots/unet_keras_model_200pairs_25epochs_2025-08-02_17-03-28_history.png)
+
+
 
 ### TensorFlow Implementation
 
