@@ -54,7 +54,7 @@ This repository provides three different implementations of the U-Net model for 
 
 ![TensorFlow Training (Sample 10, Slice 64) | Validation Dataset](faultSeg_2019_tensorflow/output/images/prediction_slice_64_tf.png)
 
-![TensorFlow Training | F3 Dataset](faultSeg_2019_keras_updated/output/images/faultSegResultsUsingKeras_updated.png)
+![TensorFlow Training | F3 Dataset](faultSeg_2019_tensorflow/output/images/faultSegResultsUsingTensorFlow.png)
 
 ### PyTorch Implementation
 
