@@ -44,7 +44,7 @@ This repository provides three different implementations of the U-Net model for 
 
 ![Keras Training (Sample 10, Slice 64) | Validation Dataset](faultSeg_2019_keras_updated/output/images/prediction_slice_64.png)
 
-![Keras Training | F3 Dataset](faultSeg_2019_keras_updated/output/images/prediction_slice_64.png)
+![Keras Training | F3 Dataset](faultSeg_2019_keras_updated/output/images/faultSegResultsUsingKeras_updated.png)
 
 ### TensorFlow Implementation
 
