@@ -2,8 +2,21 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import torch
+from unet3_pytorch import *   # unet
 
-from unet3_pytorch import * #unet
+# ─────────────────────────────────────────────────────────────
+# NEW – where are the synthetic cubes?
+# ─────────────────────────────────────────────────────────────
+try:                                        # .py script
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+except NameError:                           # notebook / REPL
+    ROOT_DIR = os.getcwd()
+
+DATA_DIR   = os.path.join(ROOT_DIR, "generateSynthData", "data")
+seismPathT = os.path.join(DATA_DIR, "train",      "seis")   # used in goTrainTest()
+faultPathT = os.path.join(DATA_DIR, "train",      "fault")
+seismPathV = os.path.join(DATA_DIR, "validation", "seis")   # used in goValidTest()
+faultPathV = os.path.join(DATA_DIR, "validation", "fault")
 
 # --- Configuration ---
 pngDir = './png/'
@@ -45,8 +58,10 @@ def goTrainTest():
     pass
 
 def goValidTest():
-    seismPath = "./data/validation/seis/"
-    faultPath = "./data/validation/fault/"
+    # seismPath = "./data/validation/seis/"
+    # faultPath = "./data/validation/fault/"
+    seismPath = seismPathV + '/'
+    faultPath = faultPathV + '/'
     n1, n2, n3 = 128, 128, 128
     dk = 2
     gx = np.fromfile(seismPath + str(dk) + '.dat', dtype=np.single)
