@@ -86,122 +86,108 @@ def add_planar_shear(volume):
     return out
 
 def add_faults_and_plane_mask(volume,
-                               mask_mode=1,
-                               num_faults_this_cube=0, # Specific number of faults for this call
-                               max_disp_this_cube=0, # Specific max displacement magnitude for this call
-                               strike_range=(0,360), # Range for random picking PER FAULT
-                               dip_range=(10,90)):   # Range for random picking PER FAULT
-    """
-    Inserts dip-slip faults and returns (faulted_volume, mask, list_of_fault_params):
-      - mask_mode=0 → boolean mask (True on any fault-plane)
-      - mask_mode=1 → uint8 mask: 1=normal (hanging wall down), 2=reverse (hanging wall up)
+                              *,
+                              cube_index,
+                              mask_mode       = 1,
+                              num_faults_this_cube = 0,
+                              max_disp_this_cube   = 0,
+                              strike_range   = (0, 360),
+                              dip_range      = (10, 90)):
 
-    num_faults_this_cube : int (the number of faults to add in this specific call)
-    max_disp_this_cube   : float or int (the max displacement magnitude for faults in this specific call)
-                           Assumed to be integer grid units based on parsing.
-    strike_range         : float or (min,max) deg - range used *per fault*
-    dip_range            : float or (min,max) deg - range used *per fault*
-    """
     nx, ny, nz = volume.shape
 
+    # ---------- helpers for single-value vs. range -------------------------
     sr = strike_range if isinstance(strike_range, tuple) else (strike_range, strike_range)
-    dr = dip_range    if isinstance(dip_range, tuple)    else (dip_range, dip_range)
+    dr = dip_range    if isinstance(dip_range,    tuple) else (dip_range,    dip_range)
 
-    X, Y, Z = np.meshgrid(np.arange(nx), np.arange(ny), np.arange(nz), indexing='ij')
-    faulted = volume.copy()
-    plane_mask = np.zeros_like(volume, dtype=(bool if mask_mode==0 else np.uint8))
+    # ---------- allocate outputs ------------------------------------------
+    faulted     = volume.copy()
+    plane_mask  = np.zeros_like(volume,
+                                dtype = (bool if mask_mode == 0 else np.uint8))
+    fault_params_list = []
 
-    fault_params_list = [] # Collect parameters for each generated fault
+    nf_actual = int(num_faults_this_cube)
 
-    nf_actual = int(num_faults_this_cube) # Ensure int
-
+    # ========================  main loop  ==================================
     for _ in range(nf_actual):
+
+        # -- random plane location & orientation ---------------------------
         x0 = np.random.randint(0, nx)
         y0 = np.random.randint(0, ny)
         z0 = np.random.randint(0, nz)
-
-        # Pick random strike and dip PER FAULT within the provided ranges
         strike_deg = np.random.uniform(*sr)
         dip_deg    = np.random.uniform(*dr)
+        dip        = np.radians(dip_deg)
+        strike_rad = np.radians(strike_deg)
 
-        # Ensure dip is not exactly 0 or 90 for numerical stability if needed
-        # dip_deg = np.clip(dip_deg, 1e-6, 90.0 - 1e-6) # Example clipping if needed
+        # -- signed vertical-displacement range for this cube -------------
+        if isinstance(max_disp_this_cube, tuple):
+            low, high = max_disp_this_cube          # already signed
+        else:
+            low, high = -max_disp_this_cube, max_disp_this_cube
 
-        strike = np.radians(strike_deg)
-        dip    = np.radians(dip_deg)
+        max_abs_disp = max(abs(low), abs(high))     # for sanity caps
 
-        # Pick slip sign PER FAULT if mask_mode is 1
-        slip_sign = 1 # Default for mask_mode 0 (no separate labels)
-        label     = True # Default for mask_mode 0 (boolean)
-        fault_type = None # Default for mask_mode 0
-        if mask_mode==1:
-            # Ensure ~50/50 normal/inverse distribution over many faults
-            # As determined previously: slip_sign = -1 for Normal (HW down, Z increase), slip_sign = +1 for Inverse (HW up, Z decrease)
-            slip_sign = np.random.choice([+1, -1]) # +1 for Inverse, -1 for Normal
-            label = 1 if slip_sign == -1 else 2 # Label 1 for Normal, Label 2 for Inverse
-            fault_type = 'Normal' if slip_sign == -1 else 'Inverse'
+        # -- draw vertical displacement, rejecting only pathological dips --
+        while True:
+            d_vert  = np.random.uniform(low, high)
+            dz_norm = -np.cos(dip)                  # Z-component of plane normal
+            if abs(dz_norm) < 1e-6:                 # almost vertical plane
+                continue                            # resample d_vert
+            d_applied = d_vert / dz_norm            # total slip along plane
+            # keep total slip reasonable (≤ 1.5 × allowed vertical component)
+            if abs(d_applied) <= max_abs_disp * 1.5:
+                break
 
-        # max_disp_this_cube is the magnitude parameter used for *this* cube
-        # The actual displacement applied along the normal is signed by slip_sign
-        d_magnitude = float(max_disp_this_cube) # Ensure float for calculations
-        d_applied = slip_sign * d_magnitude # The signed displacement magnitude applied along the normal
+        # -- fault type & label -------------------------------------------
+        slip_sign  = -1 if d_vert < 0 else 1        # Normal (-), Reverse (+)
+        if mask_mode == 0:                          # binary mask
+            label, fault_type = True, None
+        else:                                       # multi-class mask
+            label      = 1 if slip_sign == -1 else 2
+            fault_type = 'Normal' if slip_sign == -1 else 'Reverse'
 
-        # Calculate fault plane normal vector (a,b,c)
-        # This normal is perpendicular to the plane. Displacement d_applied is applied along this normal.
-        # Assuming Z is depth (downwards), normal vector has dz_norm = -cos(dip)
-        dx_norm = np.cos(strike)*np.sin(dip)
-        dy_norm = np.sin(strike)*np.sin(dip)
-        dz_norm = -np.cos(dip)
+        # -- plane coefficients (a, b, c) ---------------------------------
+        a = np.cos(strike_rad) * np.sin(dip)
+        b = np.sin(strike_rad) * np.sin(dip)
+        c = dz_norm                                     # = -cos(dip)
+        norm = np.linalg.norm([a, b, c])
+        a, b, c = a / norm, b / norm, c / norm          # unit normal
 
-        # Normalize the normal vector
-        norm_vec = np.array([dx_norm, dy_norm, dz_norm])
-        norm_norm = np.linalg.norm(norm_vec)
-        # Handle potential division by zero if dip is exactly 0 or 180 (very unlikely with ranges)
-        a, b, c = norm_vec / (norm_norm if norm_norm > 1e-6 else 1.0)
+        # -- signed distance of every voxel to the plane ------------------
+        X, Y, Z = np.meshgrid(np.arange(nx),
+                              np.arange(ny),
+                              np.arange(nz),
+                              indexing='ij')
+        D = a * (X - x0) + b * (Y - y0) + c * (Z - z0)
 
-
-        # Plane equation: a*(X-x0) + b*(Y-y0) + c*(Z-z0) = 0
-        D = a*(X-x0) + b*(Y-y0) + c*(Z-z0)
-
-        # Mask location: points close to the plane (|D| < 0.5 grid units)
+        # mask voxels close to the plane
         mask_loc = np.abs(D) < 0.5
-        plane_mask[mask_loc] = label # Assign label (True, 1, or 2)
+        plane_mask[mask_loc] = label
 
-        # Hanging wall: points on one side of the plane (defined by sign of D)
-        # Assume D > 0 is the hanging wall side for consistent displacement application.
+        # voxels on the hanging-wall side (D > 0)
         pos = D > 0
-        # Apply displacement along the normal vector (a,b,c) with magnitude d_applied
-        # A point (X_out, Y_out, Z_out) in the *output* volume at the hanging wall side
-        # was originally at (X_out - d_applied*a, Y_out - d_applied*b, Z_out - d_applied*c)
-        # in the *input* volume (volume). We need to sample the input volume at this original location.
-        # Use float coordinates for sampling and then clip/round for integer indexing if needed,
-        # but map_coordinates takes float indices and handles interpolation.
-        I_sample = X[pos].astype(np.float32) - d_applied * a
-        J_sample = Y[pos].astype(np.float32) - d_applied * b
-        K_sample = Z[pos].astype(np.float32) - d_applied * c
 
-        # Collect coordinates for map_coordinates
-        coords = np.vstack([I_sample, J_sample, K_sample])
+        # -- shift those voxels by (d_applied * normal) --------------------
+        I_s = X[pos].astype(np.float32) - d_applied * a
+        J_s = Y[pos].astype(np.float32) - d_applied * b
+        K_s = Z[pos].astype(np.float32) - d_applied * c
 
-        # Sample the input volume at the displaced coordinates
-        # Use order=1 for linear interpolation
-        # Mode 'reflect' handles boundary conditions if sample points fall outside volume bounds [0, nx/ny/nz-1]
-        if coords.shape[1] > 0: # Only attempt sampling if there are points in 'pos'
-             sampled_values = map_coordinates(volume.astype(np.float32), coords, order=1, mode='reflect')
-             # Assign sampled values to the hanging wall positions in the faulted volume
-             faulted[pos] = sampled_values
+        coords = np.vstack([I_s, J_s, K_s])
+        if coords.shape[1] > 0:                      # safety
+            samples = map_coordinates(volume.astype(np.float32),
+                                       coords, order=1, mode='reflect')
+            faulted[pos] = samples
 
-
-        # Record parameters for this fault
-        # Cast to standard Python types for JSON serialization
+        # -- log parameters ------------------------------------------------
         fault_params_list.append({
-            'disp_magnitude_per_cube': float(max_disp_this_cube), # The magnitude value used for this cube
-            'applied_disp_signed': float(d_applied), # The signed displacement applied along normal
-            'vertical_disp_component': float(d_applied * c), # The Z component of the displacement vector
-            'strike': float(strike_deg),
-            'dip': float(dip_deg),
-            'slip_sign': int(slip_sign), # Ensure JSON serializable
-            'fault_type': fault_type # 'Normal' or 'Inverse' (string is JSON serializable)
+            'cube_id'               : int(cube_index),
+            'disp_range_signed'     : (float(low), float(high)),
+            'applied_disp_signed'   : float(d_applied),
+            'vertical_disp_component': float(d_vert),
+            'strike'                : float(strike_deg),
+            'dip'                   : float(dip_deg),
+            'fault_type'            : fault_type
         })
 
     return faulted, plane_mask, fault_params_list
@@ -303,11 +289,23 @@ def main():
     args = parse_args()
 
     # Validate splits
-    if not (0 <= args.train_split <= 1 and 0 <= args.val_split <= 1):
-        raise ValueError("Train and validation splits must be between 0 and 1.")
-    pred_split = 1.0 - args.train_split - args.val_split
-    if pred_split < 0:
-        raise ValueError("Sum of train and validation splits cannot exceed 1.0.")
+    # If a value ≤ 1 → treat as percentage, otherwise as absolute count
+    if args.train_split <= 1.0:
+        num_train = int(round(args.num_pairs * args.train_split))
+    else:
+        num_train = int(round(args.train_split))
+
+    if args.val_split <= 1.0:
+        num_val = int(round(args.num_pairs * args.val_split))
+    else:
+        num_val = int(round(args.val_split))
+
+    # sanity-check
+    if num_train + num_val != args.num_pairs:
+        raise ValueError(
+            f"ERROR: requested train + val ({num_train + num_val}) "
+            f"≠ num_pairs ({args.num_pairs})."
+        )
 
     # Use the output path determined by argparse or default
     base_out = os.path.expanduser(args.output_dir)
@@ -317,13 +315,9 @@ def main():
 
     nx = ny = nz = args.size
 
-    # --- Data assignment ---
-    num_train = int(np.floor(args.num_pairs * args.train_split))
-    num_val = args.num_pairs - num_train
-
     # Create a shuffled list of assignments
     assignments = ['train'] * num_train + ['validation'] * num_val
-    np.random.shuffle(assignments)
+    #np.random.shuffle(assignments)
 
     print(f"\nData split: {num_train} train, {num_val} validation.")
 
@@ -367,27 +361,32 @@ def main():
         # Number of faults for this cube
         nf_this_cube = np.random.randint(args.faults[0], args.faults[1] + 1) if is_faults_range else args.faults
 
-        # Max displacement magnitude for this cube's faults
-        # Use randint if the input was int,int range, uniform if float,float range
-        if is_max_disp_range:
-             # Assuming parse_int_or_range made it an int tuple
-             md_this_cube = np.random.randint(args.max_disp[0], args.max_disp[1] + 1)
-        else:
-            md_this_cube = args.max_disp # Use fixed value
+        # ------------------------------------------------------------------
+        # Signed vertical-displacement range to use in this cube
+        # ------------------------------------------------------------------
+        if isinstance(args.max_disp, tuple):              # e.g. (-50, 50)
+            disp_range_this_cube = args.max_disp
+        else:                                             # single positive → symmetric
+            disp_range_this_cube = (-args.max_disp, args.max_disp)
 
-
-        # Record cube-level parameters *before* generation
-        # Cast to standard Python types for JSON serialization
+        # Record it for statistics
+        # ------------------------------------------------------------------
+        # Cube-level parameters  – build the dict *once*
+        # ------------------------------------------------------------------
         cube_params = {
-            'freq': float(freq_this_cube),
-            'noise_sigma': float(noise_sigma_this_cube) if noise_sigma_this_cube is not None else None,
-            'num_gaussians': int(ng_this_cube),
-            'num_faults_generated': int(nf_this_cube),
-            'max_disp_used': float(md_this_cube) # The magnitude used for ALL faults in this cube
+            "freq"              : float(freq_this_cube),
+            "noise_sigma"       : (float(noise_sigma_this_cube)
+                                   if noise_sigma_this_cube is not None else None),
+            "num_gaussians"     : int(ng_this_cube),
+            "num_faults_generated": int(nf_this_cube),
+            # NEW: signed range actually used in this cube
+            "disp_range_used"   : [float(disp_range_this_cube[0]),
+                                   float(disp_range_this_cube[1])]
         }
-        stats[assignment]['cube_level_params'].append(cube_params)
-        stats['all']['cube_level_params'].append(cube_params)
 
+        # add to in-memory statistics
+        stats[assignment]["cube_level_params"].append(cube_params)
+        stats["all"]["cube_level_params"].append(cube_params)
 
         # base reflectivity
         r1d = np.random.uniform(-1,1,nz)
@@ -400,12 +399,13 @@ def main():
 
         # faults + mask
         faulted, mask, fault_list_this_cube = add_faults_and_plane_mask(
-            sheared,
-            mask_mode   = args.mask_mode,
-            num_faults_this_cube  = nf_this_cube,  # Pass the determined number for this cube
-            max_disp_this_cube    = md_this_cube,  # Pass the determined max_disp for this cube
-            strike_range= strike_range_arg, # Pass ranges/values from args
-            dip_range   = dip_range_arg     # Pass ranges/values from args
+                sheared,
+                cube_index = i,
+                mask_mode  = args.mask_mode,
+                num_faults_this_cube = nf_this_cube,
+                max_disp_this_cube   = disp_range_this_cube,   # ← was md_this_cube
+                strike_range = strike_range_arg,
+                dip_range    = dip_range_arg
         )
         # Collect fault parameters generated in this cube
         stats[assignment]['all_fault_params'].extend(fault_list_this_cube)

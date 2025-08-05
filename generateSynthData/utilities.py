@@ -128,52 +128,36 @@ def plot_fault_points(fig, slice_mask, axis_index, slice_type, color, label, nx,
             name=label
         ))
         
-import numpy as np
-
-# ------------------------------------------------------------------------------
-# New helper: count_pixels
-# ------------------------------------------------------------------------------
 
 def count_pixels(mask_cubes, mask_mode=0):
-    """
-    Parameters
-    ----------
-    mask_cubes : (N, …) ndarray **or** iterable of ndarrays
-        Each entry is a cube‐shaped fault mask (uint8/uint16) with the
-        coding you already use:
-            mask_mode = 0  →  {0: no-fault, 1: fault}
-            mask_mode = 1  →  {0: no-fault, 1: normal, 2: inverse}
-    mask_mode  : int
-        0 = binary, 1 = multiclass.
 
-    Returns
-    -------
-    overall_pct : dict
-        Percent of voxels over *all cubes combined* that belong to each class.
-        Keys are always `["no_fault", "fault"]`   _or_
-        `["no_fault", "normal", "inverse"]`.
-    mean_pct    : dict
-        Same keys, but values are the **mean percentage per cube**.
-        (Good for seeing typical class balance even if cube sizes differ.)
-    """
-
-    # --- ensure we have an iterable of cubes ----------------------------------
+    # --- make sure we have an iterable ---------------------------------------
     if isinstance(mask_cubes, np.ndarray) and mask_cubes.ndim == 3:
         mask_cubes = [mask_cubes]
+    elif mask_cubes is None:
+        mask_cubes = []
 
-    # choose labels ------------------------------------------------------------
+    # nothing to count --------------------------------------------------------
+    if len(mask_cubes) == 0:
+        if mask_mode == 0:
+            zero = {"no_fault": 0.0, "fault": 0.0}
+        else:
+            zero = {"no_fault": 0.0, "normal": 0.0, "inverse": 0.0}
+        return zero, zero
+
+    # choose labels -----------------------------------------------------------
     if mask_mode == 0:
-        labels = ["no_fault", "fault"]
+        labels  = ["no_fault", "fault"]
         classes = (0, 1)
     else:
-        labels = ["no_fault", "normal", "inverse"]
+        labels  = ["no_fault", "normal", "inverse"]
         classes = (0, 1, 2)
 
-    # initialise counters ------------------------------------------------------
+    # initialise counters -----------------------------------------------------
     total_counts = dict.fromkeys(labels, 0)
     per_cube_pct = {lab: [] for lab in labels}
 
-    # iterate cubes ------------------------------------------------------------
+    # iterate cubes -----------------------------------------------------------
     for cube in mask_cubes:
         cube_size = cube.size
         for lab, cls in zip(labels, classes):
@@ -182,7 +166,14 @@ def count_pixels(mask_cubes, mask_mode=0):
             per_cube_pct[lab].append(100.0 * cls_count / cube_size)
 
     grand_total = float(sum(total_counts.values()))
-    overall_pct = {lab: 100.0 * cnt / grand_total for lab, cnt in total_counts.items()}
-    mean_pct    = {lab: float(np.mean(pcts))        for lab, pcts in per_cube_pct.items()}
+
+    # avoid division-by-zero when all voxels are class 0 ----------------------
+    if grand_total == 0:
+        overall_pct = {lab: 0.0 for lab in labels}
+    else:
+        overall_pct = {lab: 100.0 * cnt / grand_total
+                       for lab, cnt in total_counts.items()}
+
+    mean_pct = {lab: float(np.mean(pcts)) for lab, pcts in per_cube_pct.items()}
 
     return overall_pct, mean_pct
