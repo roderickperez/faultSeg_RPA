@@ -1,5 +1,5 @@
 {
-    "total_pairs": 1200,
-    "train_pairs": 1200000,
-    "validation_pairs": -1198800
+    "total_pairs": 101,
+    "train_pairs": 100,
+    "validation_pairs": 1
 }
