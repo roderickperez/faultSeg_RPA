@@ -25,33 +25,71 @@ def plot_fault_counts(fault_params_list):
     plt.tight_layout()
     return fig
 
-def plot_histogram(data, ax=None, title=None, xlabel=None, bins='auto'):
-    """Plots a histogram on a given axes object."""
-    if not data or (isinstance(data, list) and not any(x is not None for x in data)):
+def plot_histogram(
+    data,
+    ax=None,
+    title=None,
+    xlabel=None,
+    bins='auto',
+    *,
+    xlim=None,
+    hist_range=None,
+    use_percentile=False,
+    pct=(2, 98)
+):
+    """Plot a histogram on the given axes with optional fixed range/limits.
+
+    Args:
+        data: 1D list/array (None values are ignored).
+        ax: existing matplotlib Axes; if None, one is created.
+        title, xlabel: strings.
+        bins: 'auto' or int.
+        xlim: (lo, hi) to force axis limits.
+        hist_range: (lo, hi) to force which data range is binned.
+        use_percentile: if True, compute hist_range from percentiles `pct`.
+        pct: tuple of (low, high) percentiles, e.g., (2, 98).
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # sanitize input
+    if data is None:
         print(f"No data to plot histogram for '{title}'.")
         return
 
+    arr = np.asarray([x for x in data if x is not None], dtype=float)
+    arr = arr[~np.isnan(arr)]
+    if arr.size == 0:
+        print(f"No valid (non-None) data to plot histogram for '{title}'.")
+        return
+
+    # axes
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 6))
     else:
         fig = ax.figure
 
-    filtered_data = [x for x in data if x is not None]
-    if not filtered_data:
-         print(f"No valid (non-None) data to plot histogram for '{title}'.")
-         return
+    # decide range
+    if use_percentile and hist_range is None:
+        lo, hi = np.percentile(arr, pct)
+        hist_range = (float(lo), float(hi))
 
-    ax.hist(filtered_data, bins=bins, edgecolor='black')
+    # draw
+    ax.hist(arr, bins=bins, range=hist_range, edgecolor='black')
+
+    # labels/formatting
+    if xlim is not None:
+        ax.set_xlim(*xlim)
     if title:
         ax.set_title(title)
     if xlabel:
         ax.set_xlabel(xlabel)
     ax.set_ylabel('Frequency')
     ax.grid(axis='y', linestyle='--', alpha=0.7)
-    
-    if 'fig' in locals() and ax.figure == fig:
-        fig.tight_layout()
 
+    # keep return the same style as before
+    if 'fig' in locals() and ax.figure is fig:
+        fig.tight_layout()
     return ax.figure
 
 def plot_rose_diagram(strikes_deg, ax=None, title="Fault Strike Angle Distribution (Rose Diagram)"):

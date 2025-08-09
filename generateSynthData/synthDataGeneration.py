@@ -126,7 +126,7 @@ def parse_args():
                    help="Percentage of data to use for validation (e.g., 0.15 for 15%).")
     p.add_argument("--seed", type=int, default=None, help="RNG seed for reproducibility.")
     p.add_argument("--workers", type=int, default=1, help="CPU workers for per-cube parallelism.")
-    p.add_argument("--mask-thickness", type=float, default=0.5,
+    p.add_argument("--mask-thickness", type=float, default=1.5,
                help="Half-thickness (in voxels) around the fault plane to label.")
     p.add_argument("--strike-sampling", choices=["span","equal"], default="span",
                help="How to sample strike windows: 'span' (proportional to angular width) or 'equal' (equal per window).")
@@ -286,32 +286,15 @@ def add_faults_and_plane_mask(
         dip_deg = np.random.uniform(dip_lo, dip_hi)
         dip = np.deg2rad(dip_deg)
 
-        # --- choose slip magnitude
+        # --- choose slip magnitude directly from the full range
         low, high = max_disp_this_cube
-        max_tries = 50
-        slip_sign = 1
-        for _try in range(max_tries):
-            dz_norm = -np.cos(dip)
-            if abs(dz_norm) < 1e-3:
-                dip_deg = np.random.uniform(dip_lo, dip_hi)
-                dip = np.deg2rad(dip_deg)
-                continue
-            max_vert_allowed = 1.5 * max(abs(low), abs(high)) * abs(dz_norm)
-            if max_vert_allowed < min(abs(low), abs(high)):
-                dip_deg = np.random.uniform(dip_lo, dip_hi)
-                dip = np.deg2rad(dip_deg)
-                continue
-            slip_sign = np.random.choice([-1, 1])
-            upper = min(max_vert_allowed, max(abs(low), abs(high)) if slip_sign == 1 else -min(abs(low), abs(high)))
-            d_vert_mag = np.random.uniform(min(low, high), max(low, high)) * slip_sign
-            d_vert = d_vert_mag
-            d_applied = d_vert / dz_norm
-            break
+        d_applied = np.random.uniform(low, high)
+        dz_norm = -np.cos(dip)
+        if abs(dz_norm) < 1e-9:  # Avoid division by near-zero
+            d_vert = d_applied  # Default to applied displacement if dip is near vertical
         else:
-            dz_norm = -np.cos(dip) if abs(np.cos(dip)) >= 1e-9 else -1.0
-            d_applied = np.random.uniform(low, high)
             d_vert = d_applied * dz_norm
-            slip_sign = 1 if d_vert >= 0 else -1
+        slip_sign = 1 if d_vert >= 0 else -1
 
         # --- compute plane normal
         theta = np.deg2rad((90.0 - strike_deg) % 360.0)
@@ -325,14 +308,14 @@ def add_faults_and_plane_mask(
         D = a*(X - x0) + b*(Y - y0) + c*(Z - z0)
 
         # --- improved voxelization with adjustable thickness
-        base_th = 1.0 * (abs(a) + abs(b) + abs(c))  # Increased base threshold
+        base_th = 1.0 * (abs(a) + abs(b) + abs(c))
         th = float(mask_thickness) * base_th
         on_plane = np.abs(D) <= th
 
         # --- handle mask updates and fault type
         if mask_mode == 0:
-            plane_mask |= on_plane  # Binary mask union
-            fault_type = None  # No fault type for binary mask
+            plane_mask |= on_plane
+            fault_type = None
         else:
             label = 1 if slip_sign == -1 else 2
             fault_type = "Normal" if slip_sign == -1 else "Inverse"
@@ -340,8 +323,8 @@ def add_faults_and_plane_mask(
             if np.any(tgt):
                 pm = plane_mask[tgt]
                 overlap = (pm != 0) & (pm != label)
-                pm[overlap] = 3  # Mark overlap as 3
-                pm[(pm == 0) & ~overlap] = label  # Assign new label where no overlap
+                pm[overlap] = 3
+                pm[(pm == 0) & ~overlap] = label
                 plane_mask[tgt] = pm
 
         # --- apply shift to faulted volume
@@ -363,7 +346,7 @@ def add_faults_and_plane_mask(
             "vertical_disp_component": float(d_vert),
             "strike": float(strike_deg),
             "dip": float(dip_deg),
-            "fault_type": fault_type,  # Now always defined
+            "fault_type": fault_type,
             "mask_voxels": mask_voxels
         })
 
