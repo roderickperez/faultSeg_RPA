@@ -1,5 +1,5 @@
 import numpy as np
-import os
+import glob, os
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
@@ -31,8 +31,21 @@ def goTrain():
     faultPathV = "./data/validation/fault/"
 
     # Use a list to allow for shuffling
-    train_ID = list(range(200))
-    valid_ID = list(range(20))
+    # train_ID = list(range(200))
+    # valid_ID = list(range(20))
+    DATA_DIR = os.path.join(os.getcwd(), "generateSynthData", "data")
+    seismPathT = os.path.join(DATA_DIR, "train", "seis")
+    faultPathT = os.path.join(DATA_DIR, "train", "fault")
+    seismPathV = os.path.join(DATA_DIR, "validation", "seis")
+    faultPathV = os.path.join(DATA_DIR, "validation", "fault")
+
+    # discover IDs (strip ".npy")
+
+    train_ID = sorted(int(os.path.splitext(os.path.basename(p))[0])
+                    for p in glob.glob(os.path.join(seismPathT, "*.npy")))
+    valid_ID = sorted(int(os.path.splitext(os.path.basename(p))[0])
+                    for p in glob.glob(os.path.join(seismPathV, "*.npy")))
+    print(f"{len(train_ID)} train cubes, {len(valid_ID)} val cubes found.")
 
     # --- Data Loaders ---
     # Shuffle the list of file IDs before creating the generator to match Keras shuffling

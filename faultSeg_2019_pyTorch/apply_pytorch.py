@@ -2,7 +2,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import torch
-
+from pathlib import Path
 from unet3_pytorch import * #unet
 
 # --- Configuration ---
@@ -14,9 +14,20 @@ os.makedirs(os.path.join(pngDir, 'f3d'), exist_ok=True)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# Instantiate the model and load the trained weights
-# Use .pth extension for PyTorch models
-model_path = 'check/fseg-70.pth' 
+# Where is this script running from?
+try:
+    ROOT_DIR = Path(__file__).resolve().parent  # if apply_torch.py lives at repo root
+except NameError:  # e.g., in notebooks
+    ROOT_DIR = Path.cwd()
+
+
+DATA_DIR = os.path.join(ROOT_DIR, "generateSynthData", "data")
+seismPathV = os.path.join(DATA_DIR, "validation", "seis")
+faultPathV = os.path.join(DATA_DIR, "validation", "fault")
+
+# also, make sure the model path matches where you saved weights:
+model_path = 'check1/fseg-70.pth'  # or fseg_final.pth
+
 model = unet().to(device)
 model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval() # Set the model to evaluation mode
@@ -45,23 +56,23 @@ def goTrainTest():
     pass
 
 def goValidTest():
-    seismPath = "./data/validation/seis/"
-    faultPath = "./data/validation/fault/"
+    seismPath = seismPathV + '/'
+    faultPath = faultPathV + '/'
     n1, n2, n3 = 128, 128, 128
-    dk = 2
-    gx = np.fromfile(seismPath + str(dk) + '.dat', dtype=np.single)
-    fx = np.fromfile(faultPath + str(dk) + '.dat', dtype=np.single)
+    dk = 0  # pick a valid id you actually have
+
+    # >>> load NPY, not DAT
+    gx = np.load(seismPath + str(dk) + '.npy').astype(np.single)
+    fx = np.load(faultPath + str(dk) + '.npy').astype(np.single)
+
     gx = np.reshape(gx, (n1, n2, n3))
     fx = np.reshape(fx, (n1, n2, n3))
-    
-    # Pre-processing
-    gm = np.mean(gx)
-    gs = np.std(gx)
+
+    gm, gs = np.mean(gx), np.std(gx)
     gx = (gx - gm) / gs
     gx = np.transpose(gx)
     fx = np.transpose(fx)
 
-    # Prediction using the helper function
     fp = predict(gx, n1, n2, n3)
 
     # Slicing for visualization

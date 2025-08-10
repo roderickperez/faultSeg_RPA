@@ -15,44 +15,42 @@ class DataGenerator(Dataset):
         # The original code's augmentation created a batch of 2 from one sample.
         # We replicate this by doubling the dataset length and using the index
         # to decide whether to apply the flip augmentation.
-        self.augmented_length = len(self.data_IDs) * 2
+        self.augmented_length = len(self.data_IDs) * 8
 
     def __len__(self):
         'Denotes the total number of samples'
         return self.augmented_length
 
     def __getitem__(self, index):
-        'Generates one sample of data'
-        # Determine original data ID and if augmentation should be applied
-        original_index = index // 2
-        apply_flip = (index % 2 == 1)
-        
-        ID = self.data_IDs[original_index]
+        original_index = index // 8
+        rot_k          = (index % 8) % 4     # 0,1,2,3
+        apply_flip     = (index % 8) // 4    # 0 or 1
 
-        # Load data
+        ID = self.data_IDs[original_index]
         gx = np.load(os.path.join(self.dpath, f"{ID}.npy")).astype(np.single)
         fx = np.load(os.path.join(self.fpath, f"{ID}.npy")).astype(np.single)
-        
+
         gx = np.reshape(gx, self.dim)
         fx = np.reshape(fx, self.dim)
 
-        # Normalize seismic data (matched Keras version by removing epsilon)
-        xm = np.mean(gx)
-        xs = np.std(gx)
+        # z-score
+        xm, xs = np.mean(gx), np.std(gx)
         gx = (gx - xm) / xs
 
-        # Transpose to (n1, n2, n3)
+        # ▶ keep your current orientation (WITH the transpose),
+        # which makes axis 0 the "vertical", so we rotate in axes (1,2)
         gx = np.transpose(gx)
         fx = np.transpose(fx)
-        
-        # Apply flip augmentation if required
+
+        # 90° rotations around the vertical axis
+        gx = np.rot90(gx, k=rot_k, axes=(1, 2))
+        fx = np.rot90(fx, k=rot_k, axes=(1, 2))
+
+        # vertical flip
         if apply_flip:
-            gx = np.flipud(gx).copy() # Use .copy() to avoid negative stride issues
-            fx = np.flipud(fx).copy()
+            gx = gx[::-1, :, :].copy()
+            fx = fx[::-1, :, :].copy()
 
-        # Add channel dimension and convert to PyTorch tensors
-        # PyTorch expects (C, D, H, W)
-        X = torch.from_numpy(gx).unsqueeze(0) # Shape: [1, 128, 128, 128]
-        Y = torch.from_numpy(fx).unsqueeze(0) # Shape: [1, 128, 128, 128]
-
+        X = torch.from_numpy(gx).unsqueeze(0)
+        Y = torch.from_numpy(fx).unsqueeze(0)
         return X.float(), Y.float()

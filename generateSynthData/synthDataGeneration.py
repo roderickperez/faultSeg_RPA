@@ -126,10 +126,24 @@ def parse_args():
                    help="Percentage of data to use for validation (e.g., 0.15 for 15%).")
     p.add_argument("--seed", type=int, default=None, help="RNG seed for reproducibility.")
     p.add_argument("--workers", type=int, default=1, help="CPU workers for per-cube parallelism.")
-    p.add_argument("--mask-thickness", type=float, default=1.5,
-               help="Half-thickness (in voxels) around the fault plane to label.")
+    p.add_argument("--mask-thickness", type=float, default=1.0,
+                   help="Thickness scale for central-plane voxelization (1.0 ≈ one voxel).")
     p.add_argument("--strike-sampling", choices=["span","equal"], default="span",
-               help="How to sample strike windows: 'span' (proportional to angular width) or 'equal' (equal per window).")
+                   help="How to sample strike windows: 'span' (proportional to angular width) or 'equal' (equal per window).")
+    p.add_argument("--disp-mode", choices=["applied", "vertical"], default="applied",
+        help="How to sample displacement in --max-disp: "
+        "'applied' = along plane normal (current behavior); "
+        "'vertical' = sample vertical throw uniformly, then convert to applied.")
+    p.add_argument("--applied-cap-frac", type=float, default=0.35,
+        help="cap on |applied| as fraction of cube size; set high to allow larger slips")
+    p.add_argument("--applied-cap", type=float, default=None,
+        help="absolute cap on |applied| in voxels (overrides frac if set)")
+    p.add_argument("--disp-shape", choices=["uniform","u"], default="uniform",
+        help="Shape for displacement sampling: uniform or U-shaped (Beta).")
+    p.add_argument("--disp-alpha", type=float, default=0.6,
+        help="Alpha for Beta(alpha,alpha) when --disp-shape u (alpha<1 piles mass at the edges).")
+
+
 
     return p.parse_args()
 
@@ -241,8 +255,12 @@ def add_faults_and_plane_mask(
     volume, *, cube_index, mask_mode=1,
     num_faults_this_cube=0, max_disp_this_cube=(-50, 50),
     strike_range=(0, 360), dip_range=(10, 90),
-    mask_thickness=0.5,
-    strike_sampler=None):
+    mask_thickness=0.5, strike_sampler=None,
+    disp_mode="applied",
+    applied_cap_frac=0.35, applied_cap=None,
+    disp_shape="uniform", disp_alpha=0.6
+):
+
 
     nx, ny, nz = volume.shape
     vol = volume.astype(np.float32)
@@ -288,13 +306,41 @@ def add_faults_and_plane_mask(
 
         # --- choose slip magnitude directly from the full range
         low, high = max_disp_this_cube
-        d_applied = np.random.uniform(low, high)
-        dz_norm = -np.cos(dip)
-        if abs(dz_norm) < 1e-9:  # Avoid division by near-zero
-            d_vert = d_applied  # Default to applied displacement if dip is near vertical
+        dz_norm = -np.cos(dip)  # vertical component of the plane normal
+
+        if disp_mode == "vertical":
+            dz_norm = -np.cos(dip)
+
+            # huge cap (or use applied_cap_frac) to avoid truncation
+            cap_vox = applied_cap if applied_cap is not None else applied_cap_frac * min(nx, ny, nz)
+            V_cap   = cap_vox * abs(dz_norm)
+
+            Vmin, Vmax = (low, high) if low <= high else (high, low)
+
+            # feasible vertical interval (keep it, but with the huge cap it won't bite)
+            Vlo = max(Vmin, -V_cap)
+            Vhi = min(Vmax,  V_cap)
+            if Vhi <= Vlo:
+                Vlo, Vhi = -V_cap, V_cap
+
+            if disp_shape == "u":
+                # Beta(alpha,alpha) → U-shape on [0,1], map to [-1,1], then scale to symmetric width
+                u = np.random.beta(disp_alpha, disp_alpha)
+                z = 2.0*u - 1.0                      # [-1,1] with peaks at ±1
+                W = min(abs(Vlo), abs(Vhi))          # symmetric half-width actually attainable
+                d_vert = W * z                       # U-shaped in [-W, +W]
+            else:
+                d_vert = np.random.uniform(Vlo, Vhi)
+
+            dz = dz_norm if abs(dz_norm) >= 1e-6 else np.copysign(1e-6, dz_norm if dz_norm != 0 else 1.0)
+            d_applied = d_vert / dz
         else:
-            d_vert = d_applied * dz_norm
+            d_applied = np.random.uniform(low, high)
+            d_vert    = d_applied * dz_norm
+
+
         slip_sign = 1 if d_vert >= 0 else -1
+
 
         # --- compute plane normal
         theta = np.deg2rad((90.0 - strike_deg) % 360.0)
@@ -308,11 +354,63 @@ def add_faults_and_plane_mask(
         D = a*(X - x0) + b*(Y - y0) + c*(Z - z0)
 
         # --- improved voxelization with adjustable thickness
-        base_th = 1.0 * (abs(a) + abs(b) + abs(c))
-        th = float(mask_thickness) * base_th
+        # base_th = 1.0 * (abs(a) + abs(b) + abs(c))
+        # th = float(mask_thickness) * base_th
+        # on_plane = np.abs(D) <= th
+
+        # # --- handle mask updates and fault type
+        # if mask_mode == 0:
+        #     plane_mask |= on_plane
+        #     fault_type = None
+        # else:
+        #     label = 1 if slip_sign == -1 else 2
+        #     fault_type = "Normal" if slip_sign == -1 else "Inverse"
+        #     tgt = on_plane
+        #     if np.any(tgt):
+        #         pm = plane_mask[tgt]
+        #         overlap = (pm != 0) & (pm != label)
+        #         pm[overlap] = 3
+        #         pm[(pm == 0) & ~overlap] = label
+        #         plane_mask[tgt] = pm
+
+                # --- two-voxel "skin" adjacent to the plane (binary by default)
+        # Interpret `mask_thickness` in *voxel units per side* (1.0 → 1 voxel each side).
+        # The plane is centered at D=0; take bands [0.5, 0.5+thick) and (-0.5-thick, -0.5].
+        # thick = float(mask_thickness)    # call with mask_thickness=1.0
+        # pos_band = (D >= 0.5) & (D < 0.5 + thick)
+        # neg_band = (D <= -0.5) & (D > -0.5 - thick)
+        # skin = pos_band | neg_band
+
+        # # --- handle mask updates and fault type (binary by default)
+        # if mask_mode == 0:
+        #     # Binary mask {0,1}
+        #     plane_mask |= skin
+        #     fault_type = None
+        # else:
+        #     # Categorical mask {0,1,2,3} (1=Normal, 2=Inverse, 3=Overlap)
+        #     label = 1 if slip_sign == -1 else 2
+        #     fault_type = "Normal" if slip_sign == -1 else "Inverse"
+        #     tgt = skin
+        #     if np.any(tgt):
+        #         pm = plane_mask[tgt]
+        #         overlap = (pm != 0) & (pm != label)
+        #         pm[overlap] = 3
+        #         pm[(pm == 0) & ~overlap] = label
+        #         plane_mask[tgt] = pm
+
+        # # --- apply shift to faulted volume
+        # pos = (D > 0)
+        # if np.any(pos):
+        #     Xi = Xf[pos] - d_applied * a
+        #     Yi = Yf[pos] - d_applied * b
+        #     Zi = Zf[pos] - d_applied * c
+        #     coords = np.vstack([Xi, Yi, Zi])
+        #     samples = map_coordinates(faulted, coords, order=1, mode="reflect")
+        #     faulted[pos] = samples
+        base_th = 0.5 * (abs(a) + abs(b) + abs(c))
+        th = float(mask_thickness) * base_th          # 1.0 ≈ one voxel
         on_plane = np.abs(D) <= th
 
-        # --- handle mask updates and fault type
         if mask_mode == 0:
             plane_mask |= on_plane
             fault_type = None
@@ -327,7 +425,7 @@ def add_faults_and_plane_mask(
                 pm[(pm == 0) & ~overlap] = label
                 plane_mask[tgt] = pm
 
-        # --- apply shift to faulted volume
+        # apply the slip to the hanging wall (unchanged)
         pos = (D > 0)
         if np.any(pos):
             Xi = Xf[pos] - d_applied * a
@@ -337,8 +435,9 @@ def add_faults_and_plane_mask(
             samples = map_coordinates(faulted, coords, order=1, mode="reflect")
             faulted[pos] = samples
 
-        # --- stats
         mask_voxels = int(on_plane.sum())
+
+        
         fault_params_list.append({
             "cube_id": int(cube_index),
             "disp_range_signed": (float(low), float(high)),
@@ -349,6 +448,7 @@ def add_faults_and_plane_mask(
             "fault_type": fault_type,
             "mask_voxels": mask_voxels
         })
+
 
     return faulted, plane_mask, fault_params_list
 
@@ -594,7 +694,7 @@ def main():
     is_gauss_range = isinstance(args.num_gaussians, tuple)
     is_noise_range = isinstance(args.noise, tuple)
     is_faults_range = isinstance(args.faults, tuple)
-    is_max_disp_range = isinstance(args.max_disp, tuple)
+    #is_max_disp_range = isinstance(args.max_disp, tuple)
 
     strike_range_arg = args.strike
     dip_range_arg = args.dip
@@ -652,8 +752,14 @@ def main():
             strike_range=strike_range_arg,
             dip_range=dip_range_arg,
             mask_thickness=args.mask_thickness,
-            strike_sampler=strike_sampler          # <-- NEW
+            strike_sampler=strike_sampler,
+            disp_mode=args.disp_mode,
+            applied_cap_frac=args.applied_cap_frac,
+            applied_cap=args.applied_cap,
+            disp_shape=args.disp_shape,
+            disp_alpha=args.disp_alpha
         )
+
         # update stats immediately (you had this earlier but commented it)
         stats[assignment]['all_fault_params'].extend(fault_list_this_cube)
         stats['all']['all_fault_params'].extend(fault_list_this_cube)
@@ -664,14 +770,22 @@ def main():
         t4 = time.perf_counter()
 
         # ---- noise & scaling
+        # if noise_sigma_this_cube is not None:
+        #     noisy = seismic + np.random.normal(0, noise_sigma_this_cube, seismic.shape).astype(np.float32)
+        # else:
+        #     noisy = seismic
+
+        # data_max_abs = float(np.max(np.abs(noisy)))
+        # scaled_noisy = noisy / data_max_abs if data_max_abs > 1e-9 else noisy
+        # noisy_to_save = scaled_noisy.astype(np.float32)
+        # mask_to_save  = mask.astype(np.uint8)
         if noise_sigma_this_cube is not None:
             noisy = seismic + np.random.normal(0, noise_sigma_this_cube, seismic.shape).astype(np.float32)
         else:
             noisy = seismic
 
-        data_max_abs = float(np.max(np.abs(noisy)))
-        scaled_noisy = noisy / data_max_abs if data_max_abs > 1e-9 else noisy
-        noisy_to_save = scaled_noisy.astype(np.float32)
+        # SAVE THE UNSCALED, NOISY DATA DIRECTLY
+        noisy_to_save = noisy.astype(np.float32)
         mask_to_save  = mask.astype(np.uint8)
         t5 = time.perf_counter()
 

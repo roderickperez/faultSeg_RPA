@@ -36,10 +36,20 @@ def goTrain():
 
     # --- Data Loaders ---
     # Shuffle the list of file IDs before creating the generator to match Keras shuffling
-    np.random.shuffle(train_ID)
-    train_dataset = DataGenerator(dpath=seismPathT, fpath=faultPathT, data_IDs=train_ID, **params)
-    valid_dataset = DataGenerator(dpath=seismPathV, fpath=faultPathV, data_IDs=valid_ID, **params)
+    # np.random.shuffle(train_ID)
+    # train_dataset = DataGenerator(dpath=seismPathT, fpath=faultPathT, data_IDs=train_ID, **params)
+    # valid_dataset = DataGenerator(dpath=seismPathV, fpath=faultPathV, data_IDs=valid_ID, **params)
 
+    np.random.shuffle(train_ID)
+
+    train_dataset = DataGenerator(
+        dpath=seismPathT, fpath=faultPathT, data_IDs=train_ID,
+        dim=params['dim'], split="train", augment=True, vertical_axis_post=0
+    )
+    valid_dataset = DataGenerator(
+        dpath=seismPathV, fpath=faultPathV, data_IDs=valid_ID,
+        dim=params['dim'], split="val", augment=False, vertical_axis_post=0
+    )
     # Effective batch size is 2, matching Keras (original + flipped image)
     # Set shuffle=False to maintain the (original, flipped) pairing from the generator
     train_loader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=4)
