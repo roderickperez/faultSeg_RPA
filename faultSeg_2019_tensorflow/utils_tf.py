@@ -41,30 +41,27 @@ class DataGenerator(tf.keras.utils.Sequence):
             np.random.shuffle(self.indexes)
 
     def __data_generation(self, data_IDs_temp):
-        'Generates data containing batch_size samples'
-        # Initialization (replicates Keras version which effectively ignores batch_size > 1)
-        X = np.zeros((2, *self.dim, self.n_channels), dtype=np.single)
-        Y = np.zeros((2, *self.dim, self.n_channels), dtype=np.single)
-        
-        # Load data for the first ID in the batch temp list
-        gx = np.fromfile(self.dpath + str(data_IDs_temp[0]) + '.dat', dtype=np.single)
-        fx = np.fromfile(self.fpath + str(data_IDs_temp[0]) + '.dat', dtype=np.single)
-        gx = np.reshape(gx, self.dim)
-        fx = np.reshape(fx, self.dim)
-        
-        # Normalize (matched Keras version by removing epsilon)
-        xm = np.mean(gx)
-        xs = np.std(gx)
-        gx = (gx - xm) / xs
-        
-        # Transpose
-        gx = np.transpose(gx)
-        fx = np.transpose(fx)
+    'Generates data containing batch_size samples'
+    # Initialization
+    gx  = np.fromfile(self.dpath+str(data_IDs_temp[0])+'.dat',dtype=np.single)
+    fx  = np.fromfile(self.fpath+str(data_IDs_temp[0])+'.dat',dtype=np.single)
+    gx = np.reshape(gx,self.dim)
+    fx = np.reshape(fx,self.dim)
 
-        # Generate augmented data
-        X[0, ] = np.reshape(gx, (*self.dim, self.n_channels))
-        Y[0, ] = np.reshape(fx, (*self.dim, self.n_channels))
-        X[1, ] = np.reshape(np.flipud(gx), (*self.dim, self.n_channels))
-        Y[1, ] = np.reshape(np.flipud(fx), (*self.dim, self.n_channels))
+    # Standardize seismic data
+    xm = np.mean(gx)
+    xs = np.std(gx)
+    gx = (gx - xm) / xs
 
-        return X, Y
+    # Transpose dimensions
+    gx = np.transpose(gx)
+    fx = np.transpose(fx)
+
+    # Generate augmented data (4 rotations)
+    X = np.zeros((4, *self.dim, self.n_channels), dtype=np.single)
+    Y = np.zeros((4, *self.dim, self.n_channels), dtype=np.single)
+    for i in range(4):
+        X[i,] = np.reshape(np.rot90(gx, i, (1, 2)), (*self.dim, self.n_channels))
+        Y[i,] = np.reshape(np.rot90(fx, i, (1, 2)), (*self.dim, self.n_channels))
+    
+    return X, Y

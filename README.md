@@ -22,6 +22,27 @@ The code in `faultSeg_2019_keras_original` is based on the following paper:
 
 The original Keras implementation uses older versions of the library. For compatibility with newer environments, a refactored version is available in the `faultSeg_2019_keras_updated` directory.
 
+## Parameters from Wu et al. (2019)
+
+Based on the paper "FaultSeg3D: Using synthetic data sets to train an end-to-end convolutional neural network for 3D seismic fault segmentation", the key parameters are:
+
+- **Model**: A simplified 3D U-Net with 15 convolutional layers.
+  - **Encoder**: Repeats [Conv3D(3x3x3, ReLU) -> Conv3D(3x3x3, ReLU) -> MaxPool3D(2x2x2)].
+  - **Decoder**: Repeats [UpSampling3D(2x2x2) -> Concatenate -> Conv3D(3x3x3, ReLU) -> Conv3D(3x3x3, ReLU)].
+  - **Output**: Conv3D(1x1x1, Sigmoid).
+- **Training Data**:
+  - **Training set**: 200 synthetic 3D seismic images (128x128x128).
+  - **Validation set**: 20 synthetic 3D seismic images (128x128x128).
+- **Data Preprocessing & Augmentation**:
+  - **Normalization**: Subtract mean, divide by standard deviation.
+  - **Augmentation**: Vertical flips and rotations (90, 180, 270 degrees) around the vertical axis.
+- **Training Parameters**:
+  - **Loss Function**: Balanced binary cross-entropy.
+  - **Optimizer**: Adam.
+  - **Learning Rate**: `0.0001`.
+  - **Epochs**: `25`.
+  - **Batch Size**: `4` (1 original image + 3 rotated versions).
+
 ## Dataset
 
 The model is trained on a synthetic dataset consisting of 200 training pairs and 20 validation pairs, as proposed by Wu et al. (2019). You can download the dataset from the following link:

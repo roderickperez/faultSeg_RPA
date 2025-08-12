@@ -43,43 +43,27 @@ class DataGenerator(tf.keras.utils.Sequence):
 
   def __data_generation(self, data_IDs_temp):
     'Generates data containing batch_size samples'
-    # Initialize lists to hold the batch data
-    X_list = []
-    Y_list = []
+    # Initialization
+    # We only use the first ID, as the augmentations will create the full batch.
+    gx  = np.fromfile(self.dpath+str(data_IDs_temp[0])+'.dat',dtype=np.single)
+    fx  = np.fromfile(self.fpath+str(data_IDs_temp[0])+'.dat',dtype=np.single)
+    gx = np.reshape(gx,self.dim)
+    fx = np.reshape(fx,self.dim)
 
-    # --- FIX ---
-    # Loop through each ID in the batch. The original code only used data_IDs_temp[0].
-    for data_id in data_IDs_temp:
-        # Load data for the current ID
-        gx = np.fromfile(self.dpath + str(data_id) + '.dat', dtype=np.single)
-        fx = np.fromfile(self.fpath + str(data_id) + '.dat', dtype=np.single)
-        
-        gx = np.reshape(gx, self.dim)
-        fx = np.reshape(fx, self.dim)
-        
-        # Standardize seismic data
-        xm = np.mean(gx)
-        xs = np.std(gx)
-        gx = (gx - xm) / xs
-        
-        # Transpose dimensions as in the original code
-        # from (n1,n2,n3) to (n3,n2,n1)
-        gx = np.transpose(gx)
-        fx = np.transpose(fx)
-        
-        # --- AUGMENTATION ---
-        # The original code hard-coded 2 augmentations. We do the same
-        # for each sample in the batch.
-        
-        # Augmentation 1: Original
-        X_list.append(np.reshape(gx, (*self.dim, self.n_channels)))
-        Y_list.append(np.reshape(fx, (*self.dim, self.n_channels)))
-        
-        # Augmentation 2: Flipped Up-Down
-        # This augmentation is applied identically to the image and the mask
-        X_list.append(np.reshape(np.flipud(gx), (*self.dim, self.n_channels)))
-        Y_list.append(np.reshape(np.flipud(fx), (*self.dim, self.n_channels)))
+    # Standardize seismic data
+    xm = np.mean(gx)
+    xs = np.std(gx)
+    gx = (gx - xm) / xs
 
-    # Convert lists to a single numpy array.
-    # The final batch size will be 2 * self.batch_size due to augmentation.
-    return np.array(X_list, dtype=np.single), np.array(Y_list, dtype=np.single)
+    # Transpose dimensions
+    gx = np.transpose(gx)
+    fx = np.transpose(fx)
+
+    # Generate augmented data (4 rotations)
+    X = np.zeros((4, *self.dim, self.n_channels), dtype=np.single)
+    Y = np.zeros((4, *self.dim, self.n_channels), dtype=np.single)
+    for i in range(4):
+        X[i,] = np.reshape(np.rot90(gx, i, (1, 2)), (*self.dim, self.n_channels))
+        Y[i,] = np.reshape(np.rot90(fx, i, (1, 2)), (*self.dim, self.n_channels))
+    
+    return X, Y

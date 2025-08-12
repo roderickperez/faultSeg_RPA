@@ -68,7 +68,7 @@ def goTrain():
     history = model.fit(
         train_generator,
         validation_data=valid_generator,
-        epochs=100,
+        epochs=25, # Corrected epochs to match paper
         callbacks=callbacks_list,
         verbose=1
     )

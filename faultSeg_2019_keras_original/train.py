@@ -36,7 +36,7 @@ def goTrain():
   valid_generator = DataGenerator(dpath=seismPathV,fpath=faultPathV,
                                   data_IDs=valid_ID,**params)
   model = unet(input_size=(None, None, None,1))
-  model.compile(optimizer=Adam(lr=1e-4), loss='cross_entropy_balanced', # 'binary_crossentropy', 
+  model.compile(optimizer=Adam(lr=0.0001), loss=cross_entropy_balanced, 
                 metrics=['accuracy'])
   model.summary()
 
@@ -51,7 +51,7 @@ def goTrain():
   print("data prepared, ready to train!")
   # Fit the model
   history=model.fit_generator(generator=train_generator,
-  validation_data=valid_generator,epochs=100,callbacks=callbacks_list,verbose=1)
+  validation_data=valid_generator,epochs=25,callbacks=callbacks_list,verbose=1)
   model.save('check1/fseg.hdf5')
   showHistory(history)
 

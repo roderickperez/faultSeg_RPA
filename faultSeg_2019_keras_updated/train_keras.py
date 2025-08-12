@@ -46,6 +46,30 @@ def goTrain():
                 metrics=['accuracy'])
   model.summary()
 
+  # input image dimensions
+  params = {'batch_size': 1, # Set to 1, as the generator creates a batch of 4 from one sample
+            'dim':(128,128,128),
+            'n_channels':1,
+            'shuffle': True}
+  
+  seismPathT = "./data/train/seis/"
+  faultPathT = "./data/train/fault/"
+  seismPathV = "./data/validation/seis/"
+  faultPathV = "./data/validation/fault/"
+  
+  train_ID = range(200)
+  valid_ID = range(20)
+  
+  train_generator = DataGenerator(dpath=seismPathT, fpath=faultPathT,
+                                  data_IDs=train_ID, **params)
+  valid_generator = DataGenerator(dpath=seismPathV, fpath=faultPathV,
+                                  data_IDs=valid_ID, **params)
+                                  
+  model = unet(input_size=(None, None, None, 1))
+  model.compile(optimizer=Adam(learning_rate=1e-4), loss=cross_entropy_balanced,
+                metrics=['accuracy'])
+  model.summary()
+
   # --- FIX 2: Consistent checkpoint path ---
   checkpoint_dir = "checkpoints"
   os.makedirs(checkpoint_dir, exist_ok=True)
@@ -66,7 +90,7 @@ def goTrain():
   history = model.fit(
         train_generator,
         validation_data=valid_generator,
-        epochs=100,
+        epochs=25, # Corrected epochs to match paper
         callbacks=callbacks_list,
         verbose=1)
   

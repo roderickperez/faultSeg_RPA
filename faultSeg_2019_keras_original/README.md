@@ -1,31 +1,31 @@
-# FaultSeg: Original Keras Implementation
+# FaultSeg - Original Keras Implementation (Paper-Aligned)
 
-This directory contains the original Keras implementation of the U-Net model for seismic fault segmentation, as described in the paper by Wu et al. (2019).
+This directory contains the original Keras implementation of the 3D seismic fault segmentation model, as described in the paper "FaultSeg3D: Using synthetic data sets to train an end-to-end convolutional neural network for 3D seismic fault segmentation" by Wu et al. (2019).
 
-## Code Description
+The code in this directory has been verified and corrected to ensure it aligns with the parameters specified in the paper.
 
-The code is organized into the following files:
+## Model & Training Parameters
 
-- **`train.py`**: This script is used to train the U-Net model. It defines the training parameters, loads the training and validation data using a `DataGenerator`, compiles the model with an Adam optimizer and binary cross-entropy loss, and fits the model to the data.
+The following parameters are based on the paper and have been implemented in the code:
 
-- **`apply.py`**: This script applies the trained model to new seismic data for fault prediction. It loads a pre-trained model from a checkpoint file and performs inference on training, validation, or test datasets.
-
-- **`unet3.py`**: This file contains the implementation of the 3D U-Net architecture. The model consists of an encoder-decoder structure with skip connections, designed to capture both contextual and localized features in the seismic data.
-
-- **`utils.py`**: This file provides utility functions for data handling, including a `DataGenerator` class that loads and preprocesses seismic and fault data in batches.
-
-## Parameters and Usage
-
-### Training
-
-To train the model, you can run the `train.py` script. The key parameters used in the training process are:
-
-- **`batch_size`**: 1
-- **`dim`**: (128, 128, 128)
-- **`n_channels`**: 1
-- **`optimizer`**: Adam with a learning rate of `1e-4`
-- **`loss`**: Binary cross-entropy
-
-### Prediction
-
-To apply the trained model for prediction, you can use the `apply.py` script. This script loads a trained model from a `.hdf5` file and applies it to the seismic data to generate fault predictions.
+| Parameter | Value | File |
+| :--- | :--- | :--- |
+| **Model Architecture** | | `unet3.py` |
+| U-Net Type | Simplified 3D U-Net | `unet3.py` |
+| Total Conv. Layers | 15 | `unet3.py` |
+| Convolution | 3x3x3 with ReLU | `unet3.py` |
+| Downsampling | 2x2x2 Max Pooling | `unet3.py` |
+| Upsampling | 2x2x2 UpSampling3D | `unet3.py` |
+| Final Activation | Sigmoid | `unet3.py` |
+| **Training** | | `train.py` |
+| Optimizer | Adam | `train.py` |
+| Learning Rate | 0.0001 | `train.py` |
+| Loss Function | Balanced Binary Cross-Entropy | `train.py` |
+| Epochs | 25 | `train.py` |
+| Batch Size | 4 (per generator call) | `train.py`, `utils.py` |
+| **Data** | | `train.py`, `utils.py` |
+| Training Set Size | 200 synthetic pairs | `train.py` |
+| Validation Set Size | 20 synthetic pairs | `train.py` |
+| Input Image Size | 128x128x128 | `train.py` |
+| Normalization | Per-image (Mean/Std Dev) | `utils.py` |
+| Data Augmentation | Rotations (0, 90, 180, 270 deg) | `utils.py` |
