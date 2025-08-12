@@ -784,8 +784,15 @@ def main():
         else:
             noisy = seismic
 
-        # SAVE THE UNSCALED, NOISY DATA DIRECTLY
-        noisy_to_save = noisy.astype(np.float32)
+        # Normalize seismic data (mean=0, std=1)
+        data_mean = np.mean(noisy)
+        data_std = np.std(noisy)
+        # Avoid division by zero if std is very small
+        if data_std < 1e-9:
+            noisy_to_save = noisy - data_mean
+        else:
+            noisy_to_save = (noisy - data_mean) / data_std
+        noisy_to_save = noisy_to_save.astype(np.float32)
         mask_to_save  = mask.astype(np.uint8)
         t5 = time.perf_counter()
 

@@ -1,128 +1,50 @@
+from networkx import nodes
 import numpy as np
+import os
 import matplotlib.pyplot as plt
+import math # For radians in rose plot
+from matplotlib.colors import ListedColormap
+from collections import Counter
+import json
+import pandas as pd
+import random
 import plotly.graph_objects as go
+import cigvis.plotlyplot as cgp
+from cigvis import colormap, config
+from ipywidgets import IntSlider, Play, Button, HBox, VBox, interactive_output, jslink, Dropdown, interact
+from IPython.display import display
+from scipy.ndimage import map_coordinates, binary_dilation, generate_binary_structure
+from IPython.display import display, clear_output  # add this import
 
-def plot_fault_counts(fault_params_list):
-    """Plots bar chart of total, normal, and inverse fault counts."""
-    if not fault_params_list:
-        print("No fault data to plot counts.")
-        return None
+from ipywidgets import IntSlider, Dropdown, VBox, HBox, interactive_output, Output
+from IPython.display import display, clear_output
+import plotly.io as pio
+pio.renderers.default = "plotly_mimetype"   # or "notebook_connected" — pick ONE
 
-    normal_count = sum(1 for f in fault_params_list if f['fault_type'] == 'Normal')
-    inverse_count = sum(1 for f in fault_params_list if f['fault_type'] == 'Inverse')
-    total_count = len(fault_params_list)
+# One persistent anchor so we only ever show ONE viewer
+_VIEW_ANCHOR = None
 
-    labels = ['Total', 'Normal', 'Inverse']
-    counts = [total_count, normal_count, inverse_count]
+def parse_windows(s):
+    out = []
+    for rng in s.split(','):
+        lo, hi = map(lambda x: float(x.strip()), rng.split('-'))
+        out.append((lo, hi))
+    return out
 
-    fig, ax = plt.subplots(figsize=(6, 5))
-    ax.bar(labels, counts, color=['skyblue', 'lightgreen', 'salmon'])
-    ax.set_ylabel('Number of Faults')
-    ax.set_title('Fault Type Distribution Across All Cubes')
-    ax.grid(axis='y', linestyle='--', alpha=0.7)
-    for i, count in enumerate(counts):
-        ax.text(i, count + max(counts) * 0.02, str(count), ha='center')
-    plt.tight_layout()
-    return fig
+def in_windows(a, windows):
+    a = a % 360.0
+    for lo, hi in windows:
+        lo, hi = lo % 360.0, hi % 360.0
+        span = (hi - lo) % 360.0 or 360.0
+        if (a - lo) % 360.0 <= span:
+            return True
+    return False
 
-def plot_histogram(
-    data,
-    ax=None,
-    title=None,
-    xlabel=None,
-    bins='auto',
-    *,
-    xlim=None,
-    hist_range=None,
-    use_percentile=False,
-    pct=(2, 98)
-):
-    """Plot a histogram on the given axes with optional fixed range/limits.
-
-    Args:
-        data: 1D list/array (None values are ignored).
-        ax: existing matplotlib Axes; if None, one is created.
-        title, xlabel: strings.
-        bins: 'auto' or int.
-        xlim: (lo, hi) to force axis limits.
-        hist_range: (lo, hi) to force which data range is binned.
-        use_percentile: if True, compute hist_range from percentiles `pct`.
-        pct: tuple of (low, high) percentiles, e.g., (2, 98).
-    """
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    # sanitize input
-    if data is None:
-        print(f"No data to plot histogram for '{title}'.")
-        return
-
-    arr = np.asarray([x for x in data if x is not None], dtype=float)
-    arr = arr[~np.isnan(arr)]
-    if arr.size == 0:
-        print(f"No valid (non-None) data to plot histogram for '{title}'.")
-        return
-
-    # axes
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(8, 6))
-    else:
-        fig = ax.figure
-
-    # decide range
-    if use_percentile and hist_range is None:
-        lo, hi = np.percentile(arr, pct)
-        hist_range = (float(lo), float(hi))
-
-    # draw
-    ax.hist(arr, bins=bins, range=hist_range, edgecolor='black')
-
-    # labels/formatting
-    if xlim is not None:
-        ax.set_xlim(*xlim)
-    if title:
-        ax.set_title(title)
-    if xlabel:
-        ax.set_xlabel(xlabel)
-    ax.set_ylabel('Frequency')
-    ax.grid(axis='y', linestyle='--', alpha=0.7)
-
-    # keep return the same style as before
-    if 'fig' in locals() and ax.figure is fig:
-        fig.tight_layout()
-    return ax.figure
-
-def plot_rose_diagram(strikes_deg, ax=None, title="Fault Strike Angle Distribution (Rose Diagram)"):
-    """Plots a rose diagram for strike angles on a given axes object."""
-    if not strikes_deg:
-        print("No strike data to plot for rose diagram.")
-        return
-
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={'projection': 'polar'})
-    else:
-        fig = ax.figure
-
-    strikes_rad = np.radians(strikes_deg)
-    num_bins = 18
-    bin_edges_deg = np.linspace(0, 360, num_bins + 1)
-    bin_edges_rad = np.radians(bin_edges_deg)
-    counts, _ = np.histogram(strikes_rad, bins=bin_edges_rad)
-    bin_centers_rad = bin_edges_rad[:-1] + np.diff(bin_edges_rad)/2
-    width = np.diff(bin_edges_rad)[0]
-    ax.bar(bin_centers_rad, counts, width=width, bottom=0.0, align='center', alpha=0.7, color='skyblue', edgecolor='black')
-    ax.set_title(title, va='bottom', y=1.1)
-    ax.set_theta_zero_location("N")
-    ax.set_theta_direction(-1)
-    ax.set_rlabel_position(135)
-    ax.set_xticks(np.radians(np.arange(0, 360, 30)))
-    ax.set_xticklabels([f'{i}°' for i in np.arange(0, 360, 30)])
-    ax.grid(True)
-
-    if 'fig' in locals() and ax.figure == fig:
-        fig.tight_layout()
-
-    return ax.figure
+def which_window(a, wins):
+    for i, w in enumerate(wins):
+        if in_windows(a, [w]):
+            return i
+    return None
 
 def append_param_to_cmd(cmd_list, arg_name, value):
     if value is not None:
@@ -131,87 +53,239 @@ def append_param_to_cmd(cmd_list, arg_name, value):
         else:
             cmd_list += [f"--{arg_name}", str(value)]
 
-def normalize(v):
-    return ((v - v.min()) / (v.max() - v.min()) * 255).astype(np.uint8)
+def choose_idx_with_faults(split, STATS_DIR, BASE_OUT, FMT):
+    stats_f = os.path.join(STATS_DIR, f"statistics_{split}.json")
+    with open(stats_f) as f: s = json.load(f)
 
-def plot_fault_points(fig, slice_mask, axis_index, slice_type, color, label, nx, ny, nz):
-    if slice_type == "inline":
-        ks, js = np.where(slice_mask)
-        fig.add_trace(go.Scatter3d(
-            x=np.full_like(ks, axis_index),
-            y=js,
-            z=nz - 1 - ks,
-            mode='markers',
-            marker=dict(color=color, size=2),
-            name=label
-        ))
-    elif slice_type == "crossline":
-        ks, is_ = np.where(slice_mask)
-        fig.add_trace(go.Scatter3d(
-            x=is_,
-            y=np.full_like(is_, axis_index),
-            z=nz - 1 - ks,
-            mode='markers',
-            marker=dict(color=color, size=2),
-            name=label
-        ))
-    elif slice_type == "timeslice":
-        is_, js = np.where(slice_mask)
-        fig.add_trace(go.Scatter3d(
-            x=is_,
-            y=js,
-            z=np.full_like(is_, axis_index),
-            mode='markers',
-            marker=dict(color=color, size=2),
-            name=label
-        ))
-        
+    by_cube = {}
+    for fp in s["all_fault_params"]:
+        by_cube.setdefault(fp["cube_id"], []).append(fp)
 
-def count_pixels(mask_cubes, mask_mode=0):
+    ext = ".npy" if FMT == "npy" else ".dat"
+    mdir = os.path.join(BASE_OUT, split, "fault")
+    existing = {int(os.path.splitext(fn)[0]) for fn in os.listdir(mdir) if fn.endswith(ext)}
 
-    # --- make sure we have an iterable ---------------------------------------
-    if isinstance(mask_cubes, np.ndarray) and mask_cubes.ndim == 3:
-        mask_cubes = [mask_cubes]
-    elif mask_cubes is None:
-        mask_cubes = []
+    cands = [cid for cid in by_cube if by_cube[cid] and cid in existing]
+    if not cands:
+        raise RuntimeError("No matching cube ids between stats and files.")
+    return random.choice(cands)
 
-    # nothing to count --------------------------------------------------------
-    if len(mask_cubes) == 0:
-        if mask_mode == 0:
-            zero = {"no_fault": 0.0, "fault": 0.0}
-        else:
-            zero = {"no_fault": 0.0, "normal": 0.0, "inverse": 0.0}
-        return zero, zero
+def load_volumes(split, idx, BASE_OUT, CUBE_SHAPE, FMT):
+    fn = f"{idx}.{FMT}"
+    seis_p = os.path.join(BASE_OUT, split, "seis", fn)
+    mask_p = os.path.join(BASE_OUT, split, "fault", fn)
+    if FMT == "npy":
+        seismic = np.load(seis_p).astype(np.float32)
+        mask    = np.load(mask_p).astype(np.int32)
+    else:
+        seismic = np.fromfile(seis_p, np.float32).reshape(CUBE_SHAPE)
+        mask    = np.fromfile(mask_p,  np.uint8).reshape(CUBE_SHAPE).astype(np.int32)
+    return seismic, mask
 
-    # choose labels -----------------------------------------------------------
+# --- One-shot 3D viewer: grayscale seismic + mask overlay (CIGVis style) ---
+
+def view_cube_overlay(
+    split,
+    idx,
+    STATS_DIR,
+    BASE_OUT,
+    FMT="npy",
+    CUBE_SHAPE=None,
+    mask_mode=0,
+    bg_pct=(1, 99),
+    pos=None,
+    show_cbar=False,
+):
+    """Show ONE 3D CIGVis figure for a specific cube id."""
+    seismic, mask = load_volumes(split, idx, BASE_OUT, CUBE_SHAPE, FMT)
+
+    vmin, vmax = np.percentile(seismic, bg_pct)
+    mask_vis   = mask.astype(np.int32)
+    max_label  = int(mask_vis.max())
+
+    # transparent background, colored faults
     if mask_mode == 0:
-        labels  = ["no_fault", "fault"]
-        classes = (0, 1)
+        values = [0, 1]
+        cols_overlay = [
+            (1.0, 1.0, 1.0, 0.0),  # bg transparent
+            (1.0, 0.0, 0.0, 0.95), # red
+        ]
     else:
-        labels  = ["no_fault", "normal", "inverse"]
-        classes = (0, 1, 2)
+        values = [0, 1, 2] + ([3] if max_label >= 3 else [])
+        cols_overlay = [
+            (1.0, 1.0, 1.0, 0.0),   # bg transparent
+            (0.00, 0.80, 0.00, 0.95), # class 1 → green
+            (0.50, 0.00, 0.50, 0.95), # class 2 → purple
+        ] + ([(1.00, 0.55, 0.00, 0.95)] if max_label >= 3 else [])  # class 3 → orange
 
-    # initialise counters -----------------------------------------------------
-    total_counts = dict.fromkeys(labels, 0)
-    per_cube_pct = {lab: [] for lab in labels}
+    fg_cmap = colormap.custom_disc_cmap(values, cols_overlay)
+    fg_cmap = colormap.set_alpha_except_min(fg_cmap, 0.95)
 
-    # iterate cubes -----------------------------------------------------------
-    for cube in mask_cubes:
-        cube_size = cube.size
-        for lab, cls in zip(labels, classes):
-            cls_count = int((cube == cls).sum())
-            total_counts[lab] += cls_count
-            per_cube_pct[lab].append(100.0 * cls_count / cube_size)
+    ni, nx, nt = seismic.shape
+    if pos is None:
+        pos = [ni // 2, nx // 2, nt // 2]
 
-    grand_total = float(sum(total_counts.values()))
+    nodes = []
+    nodes += cgp.create_overlay(
+        bg_volume=seismic,
+        fg_volume=mask_vis,
+        pos=pos,
+        bg_cmap="gray",
+        bg_clim=[float(vmin), float(vmax)],
+        fg_cmap=fg_cmap,
+        fg_clim=[0.0, float(max_label)],
+        interpolation="nearest",
+        show_cbar=show_cbar,
+    )
 
-    # avoid division-by-zero when all voxels are class 0 ----------------------
-    if grand_total == 0:
-        overall_pct = {lab: 0.0 for lab in labels}
+    cgp.plot3D(
+        nodes,
+        aspectratio=dict(x=ni / nx, y=1.0, z=nt / nx),
+        aspectmode="manual",
+    )
+    print(f"Viewing split='{split}', cube id={idx}, pos={pos}")
+
+
+def view_one_random_cube_overlay(
+    split,
+    STATS_DIR,
+    BASE_OUT,
+    FMT="npy",
+    CUBE_SHAPE=None,
+    mask_mode=0,
+    bg_pct=(1, 99),
+    pos=None,
+    show_cbar=False,
+):
+    """Pick a random cube with faults and show ONE 3D CIGVis figure."""
+    idx = choose_idx_with_faults(split, STATS_DIR, BASE_OUT, FMT)
+    view_cube_overlay(
+        split=split, idx=idx,
+        STATS_DIR=STATS_DIR, BASE_OUT=BASE_OUT,
+        FMT=FMT, CUBE_SHAPE=CUBE_SHAPE,
+        mask_mode=mask_mode, bg_pct=bg_pct, pos=pos, show_cbar=show_cbar,
+    )
+    return idx
+
+def plot_histogram(data, ax, title, xlabel, bins='auto', xlim=None, hist_range=None, use_percentile=True):
+    if not data:
+        return
+    
+    if use_percentile:
+        low, high = np.percentile(data, [2, 98])
     else:
-        overall_pct = {lab: 100.0 * cnt / grand_total
-                       for lab, cnt in total_counts.items()}
+        low, high = xlim if xlim else (min(data), max(data))
 
-    mean_pct = {lab: float(np.mean(pcts)) for lab, pcts in per_cube_pct.items()}
+    ax.hist(data, bins=bins, range=hist_range if hist_range else (low, high), edgecolor='black', alpha=0.7)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel('Frequency')
+    if xlim:
+        ax.set_xlim(xlim)
+
+def plot_rose_diagram(ax, strikes, mask_mode, all_fault_params, normal_colour, inverse_colour):
+    if not strikes:
+        return
+
+    if mask_mode == 1:
+        strikes_normal = np.radians([f['strike'] for f in all_fault_params if f['fault_type'] == 'Normal'])
+        strikes_inverse = np.radians([f['strike'] for f in all_fault_params if f['fault_type'] == 'Inverse'])
+
+        num_bins = 18
+        bins_rad = np.linspace(0, 2 * np.pi, num_bins + 1)
+        cnt_norm, _ = np.histogram(strikes_normal, bins=bins_rad)
+        cnt_inv, _ = np.histogram(strikes_inverse, bins=bins_rad)
+
+        centres = bins_rad[:-1] + np.diff(bins_rad) / 2
+        width = np.diff(bins_rad)[0]
+
+        ax.bar(centres, cnt_norm, width=width, bottom=0.0, color=normal_colour, edgecolor='black', alpha=0.8, label='Normal')
+        ax.bar(centres, cnt_inv, width=width, bottom=cnt_norm, color=inverse_colour, edgecolor='black', alpha=0.8, label='Inverse')
+
+        ax.legend(loc='lower left', bbox_to_anchor=(1.05, 0.0))
+        ax.set_title('Fault Strike Angles', va='bottom', y=1.1)
+        ax.set_theta_zero_location("N")
+        ax.set_theta_direction(-1)
+    else:
+        angles = np.deg2rad(np.mod(strikes, 360.0))
+        num_bins = 18
+        bins_rad = np.linspace(0, 2 * np.pi, num_bins + 1)
+        cnt, _ = np.histogram(angles, bins=bins_rad)
+
+        centres = bins_rad[:-1] + np.diff(bins_rad) / 2
+        width = np.diff(bins_rad)[0]
+
+        ax.bar(centres, cnt, width=width, bottom=0.0, edgecolor='black', alpha=0.9)
+        ax.set_title('Fault Strike Angles', va='bottom', y=1.1)
+        ax.set_theta_zero_location("N")
+        ax.set_theta_direction(-1)
+
+def plot_fault_counts(ax, all_fault_params, mask_mode, normal_colour, inverse_colour):
+    if mask_mode == 0:
+        ax.bar(['Total'], [len(all_fault_params)], color=['skyblue'])
+    else:
+        normal_count = sum(1 for f in all_fault_params if f['fault_type'] == 'Normal')
+        inverse_count = sum(1 for f in all_fault_params if f['fault_type'] == 'Inverse')
+        ax.bar(['Normal', 'Inverse'], [normal_count, inverse_count], color=[normal_colour, inverse_colour])
+    ax.set_title('Fault Type Distribution')
+    ax.set_ylabel('Number of Faults')
+
+def count_pixels(mask_cubes, mask_mode):
+    total_voxels = 0
+    fault_voxels = 0
+    normal_voxels = 0
+    inverse_voxels = 0
+    overlap_voxels = 0
+
+    per_cube_fault_pct = []
+    per_cube_normal_pct = []
+    per_cube_inverse_pct = []
+    per_cube_overlap_pct = []
+
+    for mask_cube in mask_cubes:
+        cube_total = mask_cube.size
+        total_voxels += cube_total
+
+        if mask_mode == 0:
+            cube_fault = np.sum(mask_cube == 1)
+            fault_voxels += cube_fault
+            per_cube_fault_pct.append((cube_fault / cube_total) * 100)
+        else:
+            cube_normal = np.sum(mask_cube == 1)
+            cube_inverse = np.sum(mask_cube == 2)
+            cube_overlap = np.sum(mask_cube == 3)
+            
+            normal_voxels += cube_normal
+            inverse_voxels += cube_inverse
+            overlap_voxels += cube_overlap
+
+            per_cube_normal_pct.append((cube_normal / cube_total) * 100)
+            per_cube_inverse_pct.append((cube_inverse / cube_total) * 100)
+            per_cube_overlap_pct.append((cube_overlap / cube_total) * 100)
+
+    overall_pct = {}
+    mean_pct = {}
+
+    if mask_mode == 0:
+        overall_pct['fault'] = (fault_voxels / total_voxels) * 100 if total_voxels > 0 else 0
+        overall_pct['no_fault'] = 100 - overall_pct['fault']
+        mean_pct['fault'] = np.mean(per_cube_fault_pct) if per_cube_fault_pct else 0
+        mean_pct['no_fault'] = 100 - mean_pct['fault']
+    else:
+        overall_pct['normal'] = (normal_voxels / total_voxels) * 100 if total_voxels > 0 else 0
+        overall_pct['inverse'] = (inverse_voxels / total_voxels) * 100 if total_voxels > 0 else 0
+        overall_pct['overlap'] = (overlap_voxels / total_voxels) * 100 if total_voxels > 0 else 0
+        overall_pct['no_fault'] = 100 - (overall_pct['normal'] + overall_pct['inverse'] + overall_pct['overlap'])
+
+        mean_pct['normal'] = np.mean(per_cube_normal_pct) if per_cube_normal_pct else 0
+        mean_pct['inverse'] = np.mean(per_cube_inverse_pct) if per_cube_inverse_pct else 0
+        mean_pct['overlap'] = np.mean(per_cube_overlap_pct) if per_cube_overlap_pct else 0
+        mean_pct['no_fault'] = 100 - (mean_pct['normal'] + mean_pct['inverse'] + mean_pct['overlap'])
 
     return overall_pct, mean_pct
+
+def normalize(data):
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
+
+def plot_fault_points():
+    pass

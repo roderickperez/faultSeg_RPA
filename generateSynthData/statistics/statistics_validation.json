@@ -1,10 +1,10 @@
 {
     "cube_level_params": [
         {
-            "freq": 62.46233907659917,
-            "noise_sigma": 0.18837840434492692,
-            "num_gaussians": 6,
-            "num_faults_generated": 5,
+            "freq": 56.0408009511524,
+            "noise_sigma": 0.1809923409676098,
+            "num_gaussians": 4,
+            "num_faults_generated": 7,
             "disp_range_used": [
                 -50.0,
                 50.0
@@ -18,12 +18,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": -65.85623555347962,
-            "vertical_disp_component": 20.195386026095708,
-            "strike": 310.0884466660101,
-            "dip": 72.1420182860529,
+            "applied_disp_signed": -57.41972757560593,
+            "vertical_disp_component": 16.1232760882552,
+            "strike": 319.6261003286253,
+            "dip": 73.69223369046733,
             "fault_type": null,
-            "mask_voxels": 16000
+            "mask_voxels": 25293
         },
         {
             "cube_id": 100,
@@ -31,12 +31,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": -238.719892110045,
-            "vertical_disp_component": 49.044673132711004,
-            "strike": 222.19604566338433,
-            "dip": 78.14423772912079,
+            "applied_disp_signed": 128.6555406949124,
+            "vertical_disp_component": -35.68565895208506,
+            "strike": 315.0099621884022,
+            "dip": 73.89648077415288,
             "fault_type": null,
-            "mask_voxels": 33533
+            "mask_voxels": 30613
         },
         {
             "cube_id": 100,
@@ -44,12 +44,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": 334.0553103739967,
-            "vertical_disp_component": -49.172021608513845,
-            "strike": 133.67434598727078,
-            "dip": 81.53546239769602,
+            "applied_disp_signed": -207.72365407681434,
+            "vertical_disp_component": 33.524048593614886,
+            "strike": 44.351787161908724,
+            "dip": 80.71254590502151,
             "fault_type": null,
-            "mask_voxels": 20575
+            "mask_voxels": 26011
         },
         {
             "cube_id": 100,
@@ -57,12 +57,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": -206.237628072121,
-            "vertical_disp_component": 39.174283791130385,
-            "strike": 136.13632782768582,
-            "dip": 79.05029039599115,
+            "applied_disp_signed": -18.62910607249269,
+            "vertical_disp_component": 1.6754424765451637,
+            "strike": 47.12042482511239,
+            "dip": 84.84002785303568,
             "fault_type": null,
-            "mask_voxels": 31335
+            "mask_voxels": 17654
         },
         {
             "cube_id": 100,
@@ -70,12 +70,38 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": 167.56922335565855,
-            "vertical_disp_component": -28.768887535626497,
-            "strike": 229.83840183141155,
-            "dip": 80.11427843253655,
+            "applied_disp_signed": -67.30791123501953,
+            "vertical_disp_component": 14.213628913473952,
+            "strike": 318.52189522626753,
+            "dip": 77.80888471677763,
             "fault_type": null,
-            "mask_voxels": 7990
+            "mask_voxels": 32852
+        },
+        {
+            "cube_id": 100,
+            "disp_range_signed": [
+                -50.0,
+                50.0
+            ],
+            "applied_disp_signed": 167.4957694137346,
+            "vertical_disp_component": -43.720710612309354,
+            "strike": 315.4686925893245,
+            "dip": 74.86906415090841,
+            "fault_type": null,
+            "mask_voxels": 21379
+        },
+        {
+            "cube_id": 100,
+            "disp_range_signed": [
+                -50.0,
+                50.0
+            ],
+            "applied_disp_signed": -168.79754265442656,
+            "vertical_disp_component": 49.99323444394225,
+            "strike": 45.116885693595705,
+            "dip": 72.77212535448562,
+            "fault_type": null,
+            "mask_voxels": 34957
         }
     ]
 }

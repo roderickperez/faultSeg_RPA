@@ -55,7 +55,7 @@ def goTrain():
 
     # Effective batch size is 2, matching Keras (original + flipped image)
     # Set shuffle=False to maintain the (original, flipped) pairing from the generator
-    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=False, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=4)
     valid_loader = DataLoader(valid_dataset, batch_size=1, shuffle=False, num_workers=4)
 
     # --- Model, Optimizer, Loss ---
