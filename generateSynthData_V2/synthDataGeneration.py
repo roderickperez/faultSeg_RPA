@@ -2,80 +2,18 @@ import os
 import shutil
 import numpy as np
 from tqdm import tqdm
-
-# ==== Global Configuration Parameters ====
-NX = NY = NZ = 384        # Base volume dimensions (including padding)
-PAD = 128                 # Padding to crop off edges after deformation
-
-# Master feature toggles
-apply_deformation = True
-apply_shear       = False
-apply_faulting    = True
-apply_noise       = True
-
-# Vertical folding (dome/sag) parameters
-num_gaussians = 100                      # (unused in "classic" mode, but defined for completeness)
-a0_range      = (-0.1, 0.1)              # Uniform background offset for folding
-bk_range      = (0.1, 1.0)               # Amplitude range for each Gaussian bump (small values for subtle domes/sags)
-sigma_range   = (15.0, 30.0)            # Lateral size of bumps (std dev in pixels)
-
-# Multi-scale sizes (if using multi-scale bumps; not used in current classic mode)
-sigma_micro = (6.0, 14.0)
-sigma_small = (14.0, 28.0)
-sigma_med   = (28.0, 50.0)
-sigma_large = (50.0, 90.0)
-size_bucket_probs = (0.49, 0.35, 0.15, 0.01)
-
-# Classic 2D Gaussian folding (Wu et al. 2019 style)
-classic_num_bumps        = 10
-classic_a0_range         = (-0.05, 0.05)   # small global bias
-classic_bk_range         = (3.5, 10.0)     # stronger bump amplitudes
-classic_sigma_range      = (20.0, 40.0)    # moderate bump widths
-classic_pos_amp_prob     = 1.0            # make all bumps positive (before polarity flip)
-classic_keep_within_crop = True
-classic_safe_margin_frac = 0.6           # keep bumps away from padded edges
-classic_depth_scale      = 10.0          # vertical warping strength
-classic_depth_power      = 1.0          # depth weighting power
-classic_polarity         = 'up'         # 'up' = anticline (dome up), 'down' = syncline (dome down)
-
-# Planar shearing parameters (not typically used in this run)
-e0_range = (-10.0, 10.0)   # constant vertical shift
-f_range  = (-0.02, 0.02)   # shear gradient along X
-g_range  = (-0.02, 0.02)   # shear gradient along Y
-
-# Fault generation parameters
-fault_distribution_modes = ['linear', 'gaussian']  # slip distribution modes
-fault_types            = ['normal', 'reverse']     # fault type categories
-fault_type_weights     = (0.5, 0.5)                # probability for normal vs. reverse fault
-strike_sampling_mode   = 'two_sets'                # 'two_sets' (bimodal strikes) or 'random'
-strike_two_set_means   = (45.0, 135.0)             # means of the two strike sets (degrees)
-strike_two_set_spread  = 12.0                      # spread (±) around each mean (degrees)
-strike_two_set_weights = (0.5, 0.5)                # weights for each strike set
-dip_range              = (25, 70)                  # dip angle range (degrees from horizontal)
-max_slip_range         = (25.0, 50.0)              # fault slip magnitude range (in voxels)
-fault_min_cut_fraction = 0.01    # minimum fraction of volume that a fault plane must cut to be accepted
-fault_min_sep_z        = 6       # minimum vertical separation (in voxels) between any two faults
-fault_max_overlap_frac = 0.20    # maximum allowable overlap (fraction of area) between fault planes
-fault_max_proposals    = 1000    # max attempts to sample fault planes for each cube
-mask_mode              = 1       # 0 = binary fault mask, 1 = separate normal (1) vs reverse (2) labels
-
-# Wavelet and noise parameters
-wavelet_length          = 41
-wavelet_peak_freq_range = (20.0, 35.0)   # Peak frequency range for Ricker wavelet (Hz)
-noise_type              = 'gaussian'     # 'gaussian', 'uniform', 'speckle', or 'salt_pepper'
-noise_intensity         = 0.05           # Noise intensity factor relative to data range
-
-# Ensure reproducibility (set seed here; change or remove for new random dataset)
-np.random.seed(42)
+from constants import *
 
 # Set up output directories (under the current script directory)
 try:
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 except NameError:
     ROOT_DIR = os.getcwd()
-DATA_DIR  = os.path.join(ROOT_DIR, "data")
-STATS_DIR = os.path.join(ROOT_DIR, "statistics")
-IMAGE_DIR = os.path.join(ROOT_DIR, "images")
+
+DATA_DIR  = os.path.join(ROOT_DIR, DATA_DIR_NAME)
+STATS_DIR = os.path.join(ROOT_DIR, STATS_DIR_NAME)
+IMAGE_DIR = os.path.join(ROOT_DIR, IMAGE_DIR_NAME)
+
 for _dir in (DATA_DIR, STATS_DIR, IMAGE_DIR):
     os.makedirs(_dir, exist_ok=True)
 

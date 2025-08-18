@@ -1,9 +1,13 @@
 import os
 import numpy as np
 from constants import *
-
-# --------------------------
-# Helpers
+# Where to read/write datasets (set from notebook)
+BASE_OUT = None
+def set_base_out(path: str):
+    """Sets the root output directory for reading/writing cubes."""
+    global BASE_OUT
+    BASE_OUT = path
+    
 # --------------------------
 def _uniform_int_distribution(n, low, high):
     """Deterministically spread counts uniform across [low, high] for n items."""
@@ -335,9 +339,12 @@ def generate_one_cube(num_faults):
             fault_params_list,
             noise_sigma_val)
     
-def _save_cube(split, idx, vol, mask2px):
-    np.save(os.path.join(DATA_DIR, split, "seismic", f"{idx:03d}.npy"), vol)
-    np.save(os.path.join(DATA_DIR, split, "fault",   f"{idx:03d}.npy"), mask2px)
+def _save_cube(split, idx, vol, mask2px, base_out=None):
+    root = base_out or BASE_OUT
+    if root is None:
+        raise ValueError("BASE_OUT is not set. Call utilities.set_base_out(...) first or pass base_out=...")
+    np.save(os.path.join(root, split, "seismic", f"{idx:03d}.npy"), vol)
+    np.save(os.path.join(root, split, "fault",   f"{idx:03d}.npy"), mask2px)
 
 def _accumulate_pixel_stats(mask, accum_counts, accum_pct_sums):
     total = mask.size
@@ -447,43 +454,82 @@ def count_pixels(mask_cubes, mask_mode):
             mean_pct['overlap'] = np.mean(pct_overlap_list)
     return overall_pct, mean_pct
 
-def load_cube_and_masks(split, index):
-    vol_path   = os.path.join(BASE_OUT, split, "seismic", f"{index:03d}.npy")
-    mask2_path = os.path.join(BASE_OUT, split, "fault",   f"{index:03d}.npy")
+def load_cube_and_masks(split, index, base_out=None):
+    root = base_out or BASE_OUT
+    if root is None:
+        raise ValueError("BASE_OUT is not set. Call utilities.set_base_out(...) first or pass base_out=...")
+    vol_path   = os.path.join(root, split, "seismic", f"{index:03d}.npy")
+    mask2_path = os.path.join(root, split, "fault",   f"{index:03d}.npy")
     vol   = np.load(vol_path)
     mask2 = np.load(mask2_path)
     return vol, mask2
 
-def reconstruct_fault_planes_from_params(cube_fault_params, mask_shape, pad=PAD):
+def collapse_to_display_mask(mask2px):
+    """
+    Collapse a 2-px-thick training mask into a 1-px display mask that
+    aligns with the final (post-warp) seismic. Works with mask_mode 0 or 1.
+    """
+    NZ, NY, NX = mask2px.shape
+    disp = np.zeros((NZ, NY, NX), dtype=np.uint8)
+    for y in range(NY):
+        for x in range(NX):
+            col = mask2px[:, y, x]
+            nz = np.flatnonzero(col)
+            if nz.size == 0:
+                continue
+            # split into contiguous runs
+            splits = np.where(np.diff(nz) > 1)[0] + 1
+            segments = np.split(nz, splits)
+            for seg in segments:
+                zc = int(np.round(seg.mean()))  # center of the run
+                if mask_mode == 0:
+                    lbl = 1
+                else:
+                    vals = col[seg]
+                    lbl = 2 if np.any(vals == 2) else 1  # preserve class
+                disp[zc, y, x] = lbl
+    return disp
+
+
+def reconstruct_fault_planes_from_params(cube_fault_params, mask_shape, pad=None):
+    if pad is None:
+        pad = PAD
+    """
+    Rebuild planar Z(x,y) inside the CROPPED cube coordinates (0..NZc-1 etc.).
+    The original planes were defined in FULL coords; map (x',y') -> (x'+PAD, y'+PAD),
+    then shift Z by -PAD (because we cropped PAD at top).
+    """
     NZc, NYc, NXc = mask_shape
-    Xg, Yg = np.meshgrid(np.arange(NXc), np.arange(NYc), indexing='xy')
+    Xc, Yc = np.meshgrid(np.arange(NXc), np.arange(NYc), indexing='xy')
+
     fault_surfaces = []
     for fid, f in enumerate(cube_fault_params, start=1):
         A, B, C, D = f['A'], f['B'], f['C'], f['D']
-        Z_full = -(A * (Xg + pad) + B * (Yg + pad) + D) / C
-        Z_crop = Z_full - pad
-        Zp = np.array(Z_crop, dtype=float)
-        Zp[~np.isfinite(Zp)] = np.nan
-        Zp[(Zp < 0) | (Zp > NZc - 1)] = np.nan
+        if abs(C) < 1e-9:
+            Zp = None
+        else:
+            # map cropped (x',y') to full (x'+pad, y'+pad), then subtract pad in z
+            Z_full = -(A * (Xc + pad) + B * (Yc + pad) + D) / C
+            Z_crop = Z_full - pad
 
-        # class/label for display mask
+            Zp = Z_crop.astype(float)
+            Zp[(Zp < 0) | (Zp > NZc - 1)] = np.nan
+
         ftype = f.get('fault_type', 'Normal')
         label = 1 if (mask_mode == 0 or ftype == 'Normal') else 2
-
         if mask_mode == 0:
-            color = "rgba(255,0,0,0.55)"; name = f"Fault {fid}"
+            color, name = RGBA_RED, f"Fault {fid}"
         else:
             if ftype == 'Normal':
-                color = "rgba(0,204,0,0.55)"; name  = f"Fault {fid} (Normal)"
+                color, name = RGBA_GREEN, f"Fault {fid} (Normal)"
             else:
-                color = "rgba(128,0,128,0.55)"; name = f"Fault {fid} (Reverse)"
+                color, name = RGBA_PURPLE, f"Fault {fid} (Reverse)"
 
-        fault_surfaces.append({
-            'X': Xg, 'Y': Yg, 'Z': Zp,
-            'color': color, 'name': name,
-            'fault_type': ftype, 'label': label
-        })
+        fault_surfaces.append({'X': Xc, 'Y': Yc, 'Z': Zp,
+                               'color': color, 'name': name,
+                               'fault_type': ftype, 'label': label})
     return fault_surfaces
+
 
 def display_mask_from_planes(planes, shape):
     """Create a 1-px (Z) mask from reconstructed planes (for overlays only)."""
