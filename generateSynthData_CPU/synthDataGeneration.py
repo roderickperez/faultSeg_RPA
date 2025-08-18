@@ -339,12 +339,6 @@ def generate_one_cube(num_faults):
             fault_params_list,
             noise_sigma_val)
     
-def _save_cube(split, idx, vol, mask2px, base_out=None):
-    root = base_out or BASE_OUT
-    if root is None:
-        raise ValueError("BASE_OUT is not set. Call utilities.set_base_out(...) first or pass base_out=...")
-    np.save(os.path.join(root, split, "seismic", f"{idx:03d}.npy"), vol)
-    np.save(os.path.join(root, split, "fault",   f"{idx:03d}.npy"), mask2px)
 
 def _accumulate_pixel_stats(mask, accum_counts, accum_pct_sums):
     total = mask.size
@@ -454,15 +448,28 @@ def count_pixels(mask_cubes, mask_mode):
             mean_pct['overlap'] = np.mean(pct_overlap_list)
     return overall_pct, mean_pct
 
+# synthDataGeneration.py
+def _save_cube(split, idx, vol, mask2px, base_out=None):
+    root = base_out or BASE_OUT
+    if root is None:
+        raise ValueError("BASE_OUT is not set. Call utilities.set_base_out(...) first or pass base_out=...")
+    out_seis  = os.path.join(root, split, "seis")
+    out_fault = os.path.join(root, split, "fault")
+    os.makedirs(out_seis,  exist_ok=True)
+    os.makedirs(out_fault, exist_ok=True)
+    np.save(os.path.join(out_seis,  f"{idx:03d}.npy"), vol)
+    np.save(os.path.join(out_fault, f"{idx:03d}.npy"), mask2px)
+
 def load_cube_and_masks(split, index, base_out=None):
     root = base_out or BASE_OUT
     if root is None:
         raise ValueError("BASE_OUT is not set. Call utilities.set_base_out(...) first or pass base_out=...")
-    vol_path   = os.path.join(root, split, "seismic", f"{index:03d}.npy")
-    mask2_path = os.path.join(root, split, "fault",   f"{index:03d}.npy")
+    vol_path   = os.path.join(root, split, "seis",  f"{index:03d}.npy")
+    mask2_path = os.path.join(root, split, "fault", f"{index:03d}.npy")
     vol   = np.load(vol_path)
     mask2 = np.load(mask2_path)
     return vol, mask2
+
 
 def collapse_to_display_mask(mask2px):
     """

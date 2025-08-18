@@ -13,50 +13,94 @@ from ipywidgets import interact, IntSlider, Checkbox, FloatSlider
 xp = cp  # Use cupy for GPU acceleration
 
 def add_plane_slice_intersections(fig, planes, inline, xline, time):
-    if not planes: return
+    """
+    Draw intersections between reconstructed planes and the three slice surfaces.
+    Uses 0.5-center offsets so lines land on the same cell centers as the slice textures.
+    """
+    if not planes:
+        return
+
     for p in planes:
         Zp = p.get("Z")
-        if Zp is None: continue
+        if Zp is None:
+            continue
+
         ny, nx = Zp.shape
-        # inline
+        half = 0.5
+
+        # ---------- Inline (Y = inline) ----------
         if 0 <= inline < ny:
             z_line = Zp[inline, :]
-            valid  = np.isfinite(z_line)
+            valid = np.isfinite(z_line)
             if np.count_nonzero(valid) >= 2:
-                xs = np.arange(nx)[valid]
-                ys = np.full(xs.shape, float(inline) + EPS_Y)
+                xs = np.arange(nx, dtype=float)[valid] + half
+                ys = np.full(xs.shape, float(inline) + half + EPS_Y)
                 zs = z_line[valid]
-                fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="lines",
-                                           line=dict(color=p["color"], width=6),
-                                           name=f"{p['name']} ∩ Inline", showlegend=False))
-        # xline
+                fig.add_trace(go.Scatter3d(
+                    x=xs, y=ys, z=zs,
+                    mode="lines",
+                    line=dict(color=p["color"], width=6),
+                    name=f"{p['name']} ∩ Inline",
+                    showlegend=False
+                ))
+
+        # ---------- Xline (X = xline) ----------
         if 0 <= xline < nx:
             z_col = Zp[:, xline]
             valid = np.isfinite(z_col)
             if np.count_nonzero(valid) >= 2:
-                ys = np.arange(ny)[valid]
-                xs = np.full(ys.shape, float(xline) + EPS_X)
+                ys = np.arange(ny, dtype=float)[valid] + half
+                xs = np.full(ys.shape, float(xline) + half + EPS_X)
                 zs = z_col[valid]
-                fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="lines",
-                                           line=dict(color=p["color"], width=6),
-                                           name=f"{p['name']} ∩ Xline", showlegend=False))
-        # time
-        rows, med_xs = [], []
+                fig.add_trace(go.Scatter3d(
+                    x=xs, y=ys, z=zs,
+                    mode="lines",
+                    line=dict(color=p["color"], width=6),
+                    name=f"{p['name']} ∩ Xline",
+                    showlegend=False
+                ))
+
+        # ---------- Time (Z = time) ----------
+        # Find a sub-voxel iso-line of Zp == time via 1D crossings per row.
+        xs_all, ys_all = [], []
         for yy in range(ny):
             row = Zp[yy, :]
             valid = np.isfinite(row)
-            xs_hit = np.where(valid & (np.floor(row) == time))[0]
-            if xs_hit.size > 0:
-                rows.append(float(yy))
-                med_xs.append(float(np.median(xs_hit)))
-        if len(med_xs) >= 2:
-            order = np.argsort(rows)
-            ys = np.array(rows)[order]
-            xs = np.array(med_xs)[order]
-            zs = np.full_like(xs, float(time) + EPS_Z)
-            fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode="lines",
-                                       line=dict(color=p["color"], width=6),
-                                       name=f"{p['name']} ∩ Time", showlegend=False))
+            if np.count_nonzero(valid) < 2:
+                continue
+
+            r = row - float(time)
+            # indices k where segment [k, k+1] crosses zero (sign change or exact zero)
+            sign = np.sign(r)
+            cross = np.where((sign[:-1] * sign[1:] <= 0) & np.isfinite(r[:-1]) & np.isfinite(r[1:]))[0]
+            if cross.size == 0:
+                continue
+
+            # Linear interp for sub-voxel X
+            for k in cross:
+                z0, z1 = r[k], r[k + 1]
+                if z1 == z0:
+                    t_param = 0.0
+                else:
+                    t_param = -z0 / (z1 - z0)
+                x_interp = k + float(np.clip(t_param, 0.0, 1.0))
+                xs_all.append(x_interp + half)
+                ys_all.append(yy + half)
+
+        if len(xs_all) >= 2:
+            # Sort by Y to make a cleaner polyline; keep Z constant at 'time'
+            order = np.argsort(ys_all)
+            xs_sorted = np.asarray(xs_all, dtype=float)[order]
+            ys_sorted = np.asarray(ys_all, dtype=float)[order]
+            zs_sorted = np.full_like(xs_sorted, float(time) + EPS_Z)
+
+            fig.add_trace(go.Scatter3d(
+                x=xs_sorted, y=ys_sorted, z=zs_sorted,
+                mode="lines",
+                line=dict(color=p["color"], width=6),
+                name=f"{p['name']} ∩ Time",
+                showlegend=False
+            ))
 
 def mask_heatmap_overlay(mask_slice, mode=None):
     mode = mask_mode if mode is None else mode
@@ -129,12 +173,14 @@ def _mask_surface(mask_2d, plane_coord, const_index, eps=0.0):
         sc = (mask_2d > 0).astype(float)
         colorscale = [[0.0,"rgb(0,0,0)"], [0.499,"rgb(0,0,0)"], [0.50, RGBA_RED], [1.0, RGBA_RED]]
         return X, Y, Z, sc, colorscale, 0.0, 1.0
-    else:
-        sc = (mask_2d.astype(float) / 2.0)
+    else:  # mask_mode == 1
+        sc = (mask_2d.astype(float) / 2.0)   # 0 (bg), 0.5 (Normal), 1.0 (Reverse)
+
+        # Hard steps to prevent green halos around purple:
         colorscale = [
-            [0.00,"rgb(0,0,0)"], [0.166,"rgb(0,0,0)"],
-            [0.333, RGBA_GREEN], [0.666, RGBA_GREEN],
-            [0.833, RGBA_PURPLE], [1.00, RGBA_PURPLE],
+            [0.00, "rgb(0,0,0)"],  [0.49, "rgb(0,0,0)"],   # background
+            [0.50, RGBA_GREEN],    [0.51, RGBA_GREEN],     # Normal only at ~0.50
+            [0.99, RGBA_PURPLE],   [1.00, RGBA_PURPLE],    # Reverse for >0.51
         ]
         return X, Y, Z, sc, colorscale, 0.0, 1.0
 
@@ -597,3 +643,5 @@ def interact_3d_mask(mask, planes, title="3D Fault Mask"):
         plane_opacity=FloatSlider(min=0.0, max=1.0, step=0.05, value=0.55, description='Plane Opacity'),
         show_intersections=Checkbox(value=False, description='Show Plane Intersections')
     )
+    
+

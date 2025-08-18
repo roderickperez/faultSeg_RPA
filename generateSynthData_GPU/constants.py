@@ -7,9 +7,10 @@ IMAGE_DIR_NAME = "images"
 # --------------------------
 train_count = 2                 # how many training cubes
 val_count   = 1                 # how many validation cubes
-mask_mode   = 1                 # 0: binary fault/no-fault, 1: normal(1) vs reverse(2)
+mask_mode   = 0                 # 0: binary fault/no-fault, 1: normal(1) vs reverse(2)
 dome_up_probability = 0.5       # fraction of cubes with 'UP' domes (0.5 => 50/50)
 
+FAULTS_PER_CUBE_RANGE = (2, 3)  
 # --------------------------
 # Cube size & padding
 # --------------------------
@@ -51,8 +52,6 @@ classic_polarity         = 'up'         # 'up' = anticline (dome up), 'down' = s
 
 # --------------------------
 
-FAULTS_PER_CUBE_RANGE = (2, 3)  
-
 fault_min_cut_fraction = 0.01
 fault_min_sep_z        = 6
 fault_max_overlap_frac = 0.20
@@ -78,7 +77,6 @@ fault_min_cut_fraction = 0.01    # minimum fraction of volume that a fault plane
 fault_min_sep_z        = 6       # minimum vertical separation (in voxels) between any two faults
 fault_max_overlap_frac = 0.20    # maximum allowable overlap (fraction of area) between fault planes
 fault_max_proposals    = 1000    # max attempts to sample fault planes for each cube
-mask_mode              = 1       # 0 = binary fault mask, 1 = separate normal (1) vs reverse (2) labels
 
 # Wavelet and noise parameters
 wavelet_length          = 41
