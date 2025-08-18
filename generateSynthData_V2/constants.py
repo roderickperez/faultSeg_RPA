@@ -52,7 +52,7 @@ classic_polarity         = 'up'         # 'up' = anticline (dome up), 'down' = s
 
 # --------------------------
 
-FAULTS_PER_CUBE_RANGE = (1, 8)  
+FAULTS_PER_CUBE_RANGE = (2, 3)  
 
 fault_min_cut_fraction = 0.01
 fault_min_sep_z        = 6
@@ -72,7 +72,7 @@ strike_sampling_mode   = 'two_sets'                # 'two_sets' (bimodal strikes
 strike_two_set_means   = (45.0, 135.0)             # means of the two strike sets (degrees)
 strike_two_set_spread  = 12.0                      # spread (±) around each mean (degrees)
 strike_two_set_weights = (0.5, 0.5)                # weights for each strike set
-dip_range              = (25, 70)                # dip angle range (degrees from horizontal)
+dip_range              = (45, 60)                # dip angle range (degrees from horizontal)
 strike_range           = (0, 360)                  # strike angle range (degrees)
 max_slip_range         = (25.0, 50.0)              # fault slip magnitude range (in voxels)
 fault_min_cut_fraction = 0.01    # minimum fraction of volume that a fault plane must cut to be accepted
