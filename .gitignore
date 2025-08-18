@@ -130,7 +130,7 @@ cython_debug/
 # VS Code
 .vscode/
 
-Data files
+# Data files
 /data/
 *.npy
 *.dat
