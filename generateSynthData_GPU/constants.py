@@ -2,7 +2,6 @@ DATA_DIR_NAME = "data"
 STATS_DIR_NAME = "statistics"
 IMAGE_DIR_NAME = "images"
 
-
 # --------------------------
 # Dataset controls
 # --------------------------

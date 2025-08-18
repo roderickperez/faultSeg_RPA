@@ -1,0 +1,94 @@
+{
+    "cube_level_params": [
+        {
+            "freq": 57.22047278262441,
+            "noise_sigma": 0.14761635857022992,
+            "num_gaussians": 5,
+            "num_faults_generated": 6,
+            "disp_range_used": [
+                -50.0,
+                50.0
+            ]
+        }
+    ],
+    "all_fault_params": [
+        {
+            "cube_id": 100,
+            "disp_range_signed": [
+                -50.0,
+                50.0
+            ],
+            "applied_disp_signed": 68.97491735160891,
+            "vertical_disp_component": -19.232192057149366,
+            "strike": 221.871345678467,
+            "dip": 73.80968491994514,
+            "fault_type": null,
+            "mask_voxels": 21982
+        },
+        {
+            "cube_id": 100,
+            "disp_range_signed": [
+                -50.0,
+                50.0
+            ],
+            "applied_disp_signed": 32.81990648338244,
+            "vertical_disp_component": -8.764177764556052,
+            "strike": 310.86191917732305,
+            "dip": 74.51188544879486,
+            "fault_type": null,
+            "mask_voxels": 12119
+        },
+        {
+            "cube_id": 100,
+            "disp_range_signed": [
+                -50.0,
+                50.0
+            ],
+            "applied_disp_signed": 76.63377157295902,
+            "vertical_disp_component": -20.490718344117305,
+            "strike": 49.23533703475027,
+            "dip": 74.49128388441979,
+            "fault_type": null,
+            "mask_voxels": 9550
+        },
+        {
+            "cube_id": 100,
+            "disp_range_signed": [
+                -50.0,
+                50.0
+            ],
+            "applied_disp_signed": -206.001690020295,
+            "vertical_disp_component": 47.63851353391967,
+            "strike": 310.9974021507483,
+            "dip": 76.62914633765361,
+            "fault_type": null,
+            "mask_voxels": 27363
+        },
+        {
+            "cube_id": 100,
+            "disp_range_signed": [
+                -50.0,
+                50.0
+            ],
+            "applied_disp_signed": 31.061667018891267,
+            "vertical_disp_component": -3.890462911387693,
+            "strike": 317.6495766357336,
+            "dip": 82.80482704322792,
+            "fault_type": null,
+            "mask_voxels": 15761
+        },
+        {
+            "cube_id": 100,
+            "disp_range_signed": [
+                -50.0,
+                50.0
+            ],
+            "applied_disp_signed": -146.99112037285116,
+            "vertical_disp_component": 43.813761048565084,
+            "strike": 49.26552882081898,
+            "dip": 72.65823223016149,
+            "fault_type": null,
+            "mask_voxels": 32152
+        }
+    ]
+}
