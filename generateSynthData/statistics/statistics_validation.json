@@ -1,10 +1,10 @@
 {
     "cube_level_params": [
         {
-            "freq": 56.0408009511524,
-            "noise_sigma": 0.1809923409676098,
-            "num_gaussians": 4,
-            "num_faults_generated": 7,
+            "freq": 57.22047278262441,
+            "noise_sigma": 0.14761635857022992,
+            "num_gaussians": 5,
+            "num_faults_generated": 6,
             "disp_range_used": [
                 -50.0,
                 50.0
@@ -18,12 +18,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": -57.41972757560593,
-            "vertical_disp_component": 16.1232760882552,
-            "strike": 319.6261003286253,
-            "dip": 73.69223369046733,
+            "applied_disp_signed": 68.97491735160891,
+            "vertical_disp_component": -19.232192057149366,
+            "strike": 221.871345678467,
+            "dip": 73.80968491994514,
             "fault_type": null,
-            "mask_voxels": 25293
+            "mask_voxels": 21982
         },
         {
             "cube_id": 100,
@@ -31,12 +31,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": 128.6555406949124,
-            "vertical_disp_component": -35.68565895208506,
-            "strike": 315.0099621884022,
-            "dip": 73.89648077415288,
+            "applied_disp_signed": 32.81990648338244,
+            "vertical_disp_component": -8.764177764556052,
+            "strike": 310.86191917732305,
+            "dip": 74.51188544879486,
             "fault_type": null,
-            "mask_voxels": 30613
+            "mask_voxels": 12119
         },
         {
             "cube_id": 100,
@@ -44,12 +44,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": -207.72365407681434,
-            "vertical_disp_component": 33.524048593614886,
-            "strike": 44.351787161908724,
-            "dip": 80.71254590502151,
+            "applied_disp_signed": 76.63377157295902,
+            "vertical_disp_component": -20.490718344117305,
+            "strike": 49.23533703475027,
+            "dip": 74.49128388441979,
             "fault_type": null,
-            "mask_voxels": 26011
+            "mask_voxels": 9550
         },
         {
             "cube_id": 100,
@@ -57,12 +57,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": -18.62910607249269,
-            "vertical_disp_component": 1.6754424765451637,
-            "strike": 47.12042482511239,
-            "dip": 84.84002785303568,
+            "applied_disp_signed": -206.001690020295,
+            "vertical_disp_component": 47.63851353391967,
+            "strike": 310.9974021507483,
+            "dip": 76.62914633765361,
             "fault_type": null,
-            "mask_voxels": 17654
+            "mask_voxels": 27363
         },
         {
             "cube_id": 100,
@@ -70,12 +70,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": -67.30791123501953,
-            "vertical_disp_component": 14.213628913473952,
-            "strike": 318.52189522626753,
-            "dip": 77.80888471677763,
+            "applied_disp_signed": 31.061667018891267,
+            "vertical_disp_component": -3.890462911387693,
+            "strike": 317.6495766357336,
+            "dip": 82.80482704322792,
             "fault_type": null,
-            "mask_voxels": 32852
+            "mask_voxels": 15761
         },
         {
             "cube_id": 100,
@@ -83,25 +83,12 @@
                 -50.0,
                 50.0
             ],
-            "applied_disp_signed": 167.4957694137346,
-            "vertical_disp_component": -43.720710612309354,
-            "strike": 315.4686925893245,
-            "dip": 74.86906415090841,
+            "applied_disp_signed": -146.99112037285116,
+            "vertical_disp_component": 43.813761048565084,
+            "strike": 49.26552882081898,
+            "dip": 72.65823223016149,
             "fault_type": null,
-            "mask_voxels": 21379
-        },
-        {
-            "cube_id": 100,
-            "disp_range_signed": [
-                -50.0,
-                50.0
-            ],
-            "applied_disp_signed": -168.79754265442656,
-            "vertical_disp_component": 49.99323444394225,
-            "strike": 45.116885693595705,
-            "dip": 72.77212535448562,
-            "fault_type": null,
-            "mask_voxels": 34957
+            "mask_voxels": 32152
         }
     ]
 }
